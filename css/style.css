@@ -1,0 +1,40 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #05070f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: monospace;
+  image-rendering: pixelated;
+}
+
+#game {
+  position: relative;
+  border: 2px solid #1a2340;
+  box-shadow: 0 0 40px rgba(90, 140, 255, 0.25);
+}
+
+#game #logo {
+  position: absolute;
+  top: -90px;                 /* muestra el 75% superior, oculta el 25% inferior tras el canvas */
+  left: 50%;
+  transform: translateX(-50%);
+  height: 120px;
+  width: auto;
+  z-index: 0;
+  opacity: 0.35;
+  image-rendering: pixelated;
+  pointer-events: none;
+  display: none;              /* solo visible durante el juego */
+}
+
+#game canvas {
+  position: relative;
+  z-index: 1;
+}

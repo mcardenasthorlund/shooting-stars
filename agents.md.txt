@@ -1,0 +1,32 @@
+el objetivo general es hacer un juego de shoter pixel con movimiento horizontal llamado: SHOOTING STARS
+
+-PLAYER-
+1: el jugador tiene un arma
+2: el jugador solo puede girar el arma en un semicirculo, desde 90 grados hasta -90 grados.
+3: el jugador tiene que dispararle a los enemigos
+
+-ENEMIGOS-
+1: los enemigops pueden moverse en vertical
+2: los enemigos se acercan lentamente hacia el player
+3: los enemigos pueden tener variantes mas fuertes
+4: cuando un enemigo llega hacia el player le quita 10% de la vida total
+5: cuantos mas tiempo pases, mas enemigos aparecen
+6: tras un cierto tiempo aparece un enmigo que es mas fuerte (BOSS)
+
+-SISTEMA DE PUNTOS-
+1: el contado de puntos se basa en cuantos enemigos eliminas en tu partida
+2: cada enemigo te da 1 punto
+3: el enmigo mas fuerte (BOSS) te suelta 10 pntos
+
+-ESTETICA-
+1: el fondo es el espacio, donde aparecen estrellas fugaces
+2: la barra de vida aparece arriba a la izquierda 
+3: el contador de puntos aprece abajo a la derecha
+4: el player aparece a la izquierda en el medio
+5: los enemigos aparecen desde la derecha (RANDOM)
+
+-PATRON DE DISEÑO-
+1: El juego se hará mediante HTML, CSS y JS 
+2: Se organizará en módulos
+3: Se hará una separación de carpetas para tenerlo todo organizado siguiendo estándares
+4: Se utilizará Phaser2.js como motor de físicas del juego
