@@ -37,6 +37,23 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ---
 
+## 🎨 Galería de arte
+
+Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego mediante imágenes propias en `assets/`.
+
+### Power ups
+- [💛 **BIG BOY**](assets/Big_Boy.png) — hace tus balas 3× más grandes.
+- [🧡 **BIG BOOM**](assets/Big_Boom.png) — explosión de pantalla completa.
+
+### Enemigos
+- [👾 **BOSS**](assets/boss.png) — el jefe de cada fase.
+- [👾 **BOSS 2**](assets/boss2.png) — variante del jefe.
+- [👾 **BOSS 3**](assets/boss3.png) — variante del jefe.
+- [✨ **Enemigo básico**](assets/estrella.png) — la estrella que gira y se acerca.
+- [🌠 **Enemigo variante**](assets/estrella2.png) — la estrella naranja, más resistente.
+
+---
+
 ## 🛠️ Tecnología
 
 | Tecnología | Uso |
