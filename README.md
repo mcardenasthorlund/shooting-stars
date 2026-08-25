@@ -125,3 +125,9 @@ En él se registran las **38 fases completadas**, desde el scaffold inicial hast
 **MANUEL (12 años)** y su padre, con el diseño en **Procreate** y el desarrollo guiado por **DeepSeek** + **opencode**.
 
 > **¡Que no te desintegren las estrellas!** 🌠
+
+---
+
+## 🖼️ Capturas
+
+![Captura de Shooting Stars](assets/captura.png)
