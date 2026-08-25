@@ -2,9 +2,9 @@
 
 # 🌟 SHOOTING STARS
 
-Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por un niño de **12 años** con la ayuda de su padre.
+Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Manuel, de **12 años**, con la ayuda de su padre.
 
-> Un proyecto de **vibecoding** hecho en familia: el niño diseñó el arte (con **Procreate**) y planteó la idea, el padre guió el desarrollo, y juntos usaron **DeepSeek** como motor de IA y **opencode** como interfaz para escribir el código.
+> Un proyecto de **vibecoding** hecho en familia: Manuel diseña el arte (con **Procreate**), plantea las ideas y genera las instrucciones para el agente de IA, su padre asesora sobre el desarrollo y posibles bugs, y juntos usan **DeepSeek** como motor de IA y **opencode** como interfaz para escribir el código.
 
 ---
 
@@ -47,7 +47,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por un 
 | **opencode** | Interfaz de desarrollo |
 | **Procreate** | Arte y diseños originales |
 
-Todo el arte del juego (logo, enemigos, BOSS, planetas, power ups) fue dibujado por el niño con **Procreate** y se integra mediante imágenes propias en `assets/`.
+Todo el arte del juego (logo, enemigos, BOSS, planetas, power ups) es dibujado por Manuel con **Procreate** y se integra mediante imágenes propias en `assets/`.
 
 ---
 
