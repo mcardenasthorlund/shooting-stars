@@ -53,12 +53,17 @@
 | 36 | Planetas con imágenes `Planeta_Fondo_N1/N2/N3.png` al azar + peligro con tint rojo | ✅ |
 | 37 | Power ups `BIG BOY`/`BIG BOOM` muestran su PNG en el inventario | ✅ |
 | 38 | TIENDA de armas: menú victoria BOSS (SHOP/CONTINUE/SURRENDER), compra/equipado | ✅ |
+| 39 | Responsive (Scale.FIT), táctil (disparo/apuntado/power ups/UI) + PWA instalable/offline | ✅ |
 
 ## Estructura de carpetas
 ```
 SHOOTING STARS/
-├── index.html               # CDN Phaser 3 + carga de módulos
+├── index.html               # CDN Phaser 3 + carga de módulos + metas PWA/iOS + Open Graph
+├── manifest.webmanifest     # PWA: instalable (standalone), iconos, start_url/scope explícitos
+├── sw.js                    # Service Worker (network-first + aviso de versión)
+├── robots.txt               # permite a todos los crawlers (Facebook/WhatsApp incluidos)
 ├── css/style.css
+├── assets/icons/            # iconos PWA (192/512/maskable/apple-touch) + og-image (1200x630)
 └── js/
     ├── config.js            # constantes ajustables
     ├── main.js              # instancia Phaser.Game + RecordSystem
@@ -278,9 +283,26 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
   - **Tienda**: columna de armas a la izquierda, descripción (`SHOOT`/`TIME PER SHOOT`/`COST`) + botón COMPRAR a la derecha, SALIR abajo-derecha (vuelve al menú), texto `ARMA EQUIPADA`, puntos disponibles y zona de avisos.
   - **Compra**: aviso de confirmación; si hay un arma comprada equipada (distinta de la base) añade "Se sustituirá tu arma actual". CONFIRMAR gasta puntos y equipa (una sola arma, sustitución automática). Sin saldo → "Puntos insuficientes".
 
+## Sesión actual (responsive + PWA + táctil)
+
+### 39. Responsive, PWA y controles táctiles ✅
+- **Escala (`main.js`)**: `scale: { mode: Phaser.Scale.FIT, autoCenter: CENTER_BOTH }`. La resolución interna sigue siendo 800×600; el canvas se escala/letterboxea para caber en la ventana en cualquier orientación. El contenedor `#game` pasa a ocupar el 100% del viewport (el borde/sombra se mueven al `canvas`).
+- **Overlays HTML reposicionados por JS**: `positionHtmlOverlays()` (eventos `scale resize` + `ready`) coloca el logo superior y el botón fullscreen siguiendo el canvas centrado (`ox/oy = (parentSize - displaySize)/2`).
+- **CSS responsive**: `html/body height:100%`, `overflow:hidden`, `100dvh`; `touch-action:none`, sin tap-highlight ni selección; bordes reducidos en pantallas pequeñas; logo oculto en pantallas bajas (`max-height:430px`).
+- **Botón fullscreen**: `#fullscreen-btn` (HTML, solo visible en táctil `@media (hover:none) and (pointer:coarse)`) → `requestFullscreen()/exitFullscreen()`.
+- **Overlay de rotación**: `#rotate-device` mostrado solo en vertical + táctil (`@media (orientation:portrait) and (hover:none) and (pointer:coarse)`), con "GIRA TU DISPOSITIVO".
+- **Táctil (InputHandler)**: disparo continuo manteniendo el dedo/ratón pulsado (`activePointer.isDown` + cooldown del arma → `tryFire()`); el apuntado por toque ya funcionaba (`pointermove` → `aimWithMouse`).
+- **Táctil (BootScene)**: el inicio ya usaba `pointerdown`; la intro ahora avanza también tocando la pantalla (mismo `onKey` que ENTER, limpio al terminar). Hint actualizado a "Pulsa CLIC o TOCA para comenzar".
+- **Táctil (UIScene)**: cada slot del inventario es `setInteractive()` y al pulsarlo llama a `GameScene.activateSlot(i)` (se mantienen las teclas 1/2/3). El Game Over se reinicia con ENTER **o** tocando la pantalla (texto actualizado).
+- **PWA instalable**: `manifest.webmanifest` (standalone **sin bloqueo de orientación**, theme/background `#05070f`, iconos 192/512 + maskable, `id`/`start_url: "/index.html"` y `scope: "/"` explícitos) e iconos generados desde `assets/logo.png` (`assets/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`). Metadatos iOS/theme-color en `index.html`.
+- **Compartir en redes**: `index.html` con Open Graph + Twitter Card (`og:title/description/url`, `og:image` absoluta `https://shootingstars.ideasypruebas2.es/assets/icons/og-image.png`, 1200×630) para que WhatsApp/redes muestren logo + descripción. Nuevo `robots.txt` en la raíz que permite a todos los crawlers (`facebookexternalhit`, `facebookbot`, etc.).
+- **Service Worker `sw.js` (network-first)**: el contenido **siempre se busca en internet**; la caché runtime solo es respaldo offline (nunca estanca versiones). `install` hace `skipWaiting()` + calentamiento ligero de la caché (shell + CDN de Phaser); `activate` limpia cachés viejas y hace `clients.claim()`; el `fetch` es network-first con fallback a caché (incluye respuestas opacas del CDN).
+- **Aviso "NUEVA VERSIÓN DESCARGADA" (`main.js`)**: al registrar el SW se escucha `updatefound` → cuando el SW nuevo llega a `installed` **y** la página ya estaba controlada, se muestra el banner `#update-banner` con botón **ACTUALIZAR** (recarga). Para publicar una versión: subir el código y **bumpear `VERSION` en `sw.js`** (el navegador detecta el SW nuevo y dispara el aviso).
+- `CFG.VERSION` → `0.3-beta`.
+
 ## Verificación
-- 19 archivos JS sin errores de sintaxis (`node --check`).
-- Prueba en navegador pendiente: abrir `index.html` (requiere internet para el CDN de Phaser).
+- 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.
+- Prueba en navegador pendiente: abrir desde un **servidor HTTP local** (la PWA/el service worker requieren http/https, no `file://`). Probar: escalado móvil (landscape), apuntado/disparo por toque, power ups por toque, botón fullscreen, instalación como PWA, actualización (bumpear `VERSION` en `sw.js` → banner → ACTUALIZAR) y modo offline.
 
 ## Historial de incidencias
 - **`hint is not defined` (arrranque):** el bloque del tween de `hint` y los listeners de inicio quedaron dentro de `updateRecord()`. Movidos de vuelta a `create()`.
@@ -299,6 +321,11 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Texto `enemy_img` con fuente errónea:** evitar `tex.getSourceImage().width` (podía lanzar error si la textura no estaba lista); se usa `sprite.setDisplaySize(size, size)` para forzar el tamaño y `body.setSize(size, size, true)` para centrar el cuerpo.
 - **Barra del BOSS en negro hasta el primer disparo:** `showBossBar()` solo mostraba el fondo y el relleno rojo dependía de `boss-hurt`. Ahora `showBossBar()` dibuja la barra completa llamando a `setBossHealth(CFG.BOSS_LIFE)`.
 - **Imagen de último punto de vida que no salía:** `VARIANT_LIFE_MULT: 2.5` hacía que la vida nunca fuese exactamente 1 (2.5→1.5→0.5). Se fija a **3** para que la comprobación `life === 1` se cumpla.
+- **`net::ERR_CACHE_MISS` al arrancar desde el icono (Android):** el `fetch` network-first del SW a la `start_url` fallaba y, con la caché sin la copia del shell, el `respondWith` rechazaba y la navegación moría (la app no arrancaba desde el icono aunque sí desde la URL). Fixes:
+  - `manifest.webmanifest`: `id`/`start_url` explícitos (`/index.html`) y `scope: "/"` (antes `"."`/`"."`, resolución frágil y redirección de raíz).
+  - `sw.js` (v0.3.1): el handler de fetch **nunca rechaza** — si la red falla sirve la copia en caché (URL exacta o shell `./index.html`), y si no hay nada devuelve una página mínima de "sin conexión" en vez de ERR_CACHE_MISS; `cache.put` protegido en try/catch; atajo `navigator.onLine` para ir directo a caché estando offline. Requiere desinstalar y reinstalar la app instalada para renovar la WebAPK (la `start_url` queda grabada al instalar).
+- **Icono instalado en Android que no arranca (aunque el enlace sí):** se elimina `"orientation": "landscape"` del manifest (`sw.js` v0.3.2). El bloqueo de orientación en la WebAPK impide el arranque desde el launcher en algunos dispositivos (la actividad no llega a renderizar), mientras que abrir desde una URL sí funciona. La orientación ya la gestionan el overlay `#rotate-device` (portrait) y el Scale.FIT. Requiere desinstalar + borrar datos del sitio + reinstalar. **Resuelto.**
+- **Facebook Sharing Debugger: "La URL ha devuelto un código de respuesta HTTP incorrecto":** el crawler de Facebook recibía un **403** en `/` (bloqueo por IP de la protección anti-bot/WAF del hosting, no por User-Agent: nuestras peticiones con `facebookexternalhit` daban 200) y, además, `robots.txt` devolvía **500** (no existía el archivo y el hosting lo enrutaba a un handler que fallaba). Fixes: nuevo `robots.txt` en la raíz que permite todos los crawlers; el 403 restante es del hosting (excepción para `facebookexternalhit`/`facebookbot` o desactivar el anti-bot en el panel del proveedor). **WhatsApp ya lee la metainformación.**
 
 ## Pendientes / ideas futuras (opcional)
 - Sonido / música.

@@ -37,7 +37,7 @@ class BootScene extends Phaser.Scene {
     logo.setOrigin(0.5, 0.5);
 
     const controls = this.add.text(W / 2, H / 2 + 150, [
-      'Ratón: apuntar   •   Clic / ESPACIO: disparar',
+      'Apuntar: ratón o dedo   •   Disparar: clic, ESPACIO o tocar la pantalla',
       'El arma rota de -90° a +90°',
       'Aguanta 60s para que aparezca el BOSS',
     ], {
@@ -47,7 +47,7 @@ class BootScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5, 0.5);
 
-    this.hint = this.add.text(W / 2, H - 60, 'Pulsa CLIC o ENTER para comenzar', {
+    this.hint = this.add.text(W / 2, H - 60, 'Pulsa CLIC o TOCA para comenzar', {
       fontFamily: 'monospace',
       fontSize: '18px',
       color: '#ffffff',
@@ -115,10 +115,12 @@ class BootScene extends Phaser.Scene {
       advance();
     };
     keyEnter.on('down', onKey);
+    this.input.on('pointerdown', onKey);
 
     const advance = () => {
       if (currentLine >= total) {
         keyEnter.off('down', onKey);
+        this.input.off('pointerdown', onKey);
         this.time.delayedCall(300, () => this.start());
         return;
       }
