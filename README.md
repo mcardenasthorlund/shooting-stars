@@ -8,6 +8,20 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ---
 
+## 🌐 Juega online e instálalo en cualquier dispositivo
+
+▶️ **Juega a la versión actual:** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+
+Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
+
+- 📱 **Android (Chrome):** abre la URL → menú ⋮ (o el aviso "Instalar app") → **"Instalar aplicación"**. Se añadirá el icono a la pantalla de inicio.
+- 🍎 **iPhone/iPad (Safari):** abre la URL → botón **Compartir** → **"Añadir a pantalla de inicio"**.
+- 💻 **Windows / Mac / Linux (Chrome o Edge):** abre la URL → icono de instalación de la barra de direcciones → **"Instalar"**.
+
+El juego está pensado para jugarse **en horizontal** (si el móvil está en vertical, te pedirá girar el dispositivo). Instalado como PWA funciona **offline** gracias a su service worker y **se actualiza solo**: cuando hay una versión nueva, la app avisa con **"NUEVA VERSIÓN DESCARGADA"**.
+
+---
+
 ## 🎮 Qué es
 
 **Shooting Stars** es un juego de naves espaciales en el que controlas a un jugador fijo situado a la izquierda de la pantalla, con un arma que rota en semicírculo (−90° a +90°). Debes disparar a los enemigos que se acercan desde la derecha antes de que crucen tu línea defensiva.
@@ -72,9 +86,13 @@ Todo el arte del juego (logo, enemigos, BOSS, planetas, power ups) es dibujado p
 
 ```
 SHOOTING STARS/
-├── index.html               # CDN Phaser 3 + carga de módulos
+├── index.html               # CDN Phaser 3 + carga de módulos + metas PWA/Open Graph
+├── manifest.webmanifest     # PWA: instalable (standalone)
+├── sw.js                    # Service Worker (network-first + modo offline)
+├── robots.txt               # permite a los crawlers (Facebook/WhatsApp)
 ├── css/style.css
 ├── assets/                  # Arte (logo, enemigos, BOSS, planetas, power ups)
+│   └── icons/               # iconos PWA + imagen para compartir en redes
 └── js/
     ├── config.js            # constantes ajustables
     ├── main.js              # instancia Phaser.Game + RecordSystem
@@ -104,11 +122,12 @@ SHOOTING STARS/
 
 ## 🚀 Cómo jugar
 
-1. Abre **`index.html`** en un navegador.
-2. Pulsa **ENTER** (o haz clic) para pasar la intro animada.
+1. Entra en **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)** (o abre **`index.html`** en local para desarrollo).
+2. Pulsa **ENTER** (o haz clic / toca la pantalla) para pasar la intro animada.
 3. ¡Sobrevive a las oleadas, derrota al BOSS y consigue el récord más alto!
+4. En el móvil, usa el botón **⛶** para jugar a pantalla completa (o instala la app como PWA, ver sección anterior).
 
-> **Nota:** el juego requiere conexión a internet para cargar Phaser 3 desde el CDN.
+> **Nota:** la primera carga requiere conexión a internet para descargar Phaser 3 desde el CDN. Una vez instalada como PWA, el juego queda disponible **sin conexión**.
 
 ---
 
@@ -116,7 +135,7 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **38 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **39 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda y la versión responsive/PWA, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 ---
 

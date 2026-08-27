@@ -58,11 +58,12 @@
 ## Estructura de carpetas
 ```
 SHOOTING STARS/
-├── index.html               # CDN Phaser 3 + carga de módulos + metas PWA/iOS + overlays
-├── manifest.webmanifest     # PWA: instalable, landscape, iconos
+├── index.html               # CDN Phaser 3 + carga de módulos + metas PWA/iOS + Open Graph
+├── manifest.webmanifest     # PWA: instalable (standalone), iconos, start_url/scope explícitos
 ├── sw.js                    # Service Worker (network-first + aviso de versión)
+├── robots.txt               # permite a todos los crawlers (Facebook/WhatsApp incluidos)
 ├── css/style.css
-├── assets/icons/            # iconos PWA (192/512/maskable/apple-touch)
+├── assets/icons/            # iconos PWA (192/512/maskable/apple-touch) + og-image (1200x630)
 └── js/
     ├── config.js            # constantes ajustables
     ├── main.js              # instancia Phaser.Game + RecordSystem
@@ -293,7 +294,8 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Táctil (InputHandler)**: disparo continuo manteniendo el dedo/ratón pulsado (`activePointer.isDown` + cooldown del arma → `tryFire()`); el apuntado por toque ya funcionaba (`pointermove` → `aimWithMouse`).
 - **Táctil (BootScene)**: el inicio ya usaba `pointerdown`; la intro ahora avanza también tocando la pantalla (mismo `onKey` que ENTER, limpio al terminar). Hint actualizado a "Pulsa CLIC o TOCA para comenzar".
 - **Táctil (UIScene)**: cada slot del inventario es `setInteractive()` y al pulsarlo llama a `GameScene.activateSlot(i)` (se mantienen las teclas 1/2/3). El Game Over se reinicia con ENTER **o** tocando la pantalla (texto actualizado).
-- **PWA instalable**: `manifest.webmanifest` (standalone, `orientation: landscape`, theme/background `#05070f`, iconos 192/512 + maskable) e iconos generados desde `assets/logo.png` (`assets/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`). Metadatos iOS/theme-color en `index.html`.
+- **PWA instalable**: `manifest.webmanifest` (standalone **sin bloqueo de orientación**, theme/background `#05070f`, iconos 192/512 + maskable, `id`/`start_url: "/index.html"` y `scope: "/"` explícitos) e iconos generados desde `assets/logo.png` (`assets/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`). Metadatos iOS/theme-color en `index.html`.
+- **Compartir en redes**: `index.html` con Open Graph + Twitter Card (`og:title/description/url`, `og:image` absoluta `https://shootingstars.ideasypruebas2.es/assets/icons/og-image.png`, 1200×630) para que WhatsApp/redes muestren logo + descripción. Nuevo `robots.txt` en la raíz que permite a todos los crawlers (`facebookexternalhit`, `facebookbot`, etc.).
 - **Service Worker `sw.js` (network-first)**: el contenido **siempre se busca en internet**; la caché runtime solo es respaldo offline (nunca estanca versiones). `install` hace `skipWaiting()` + calentamiento ligero de la caché (shell + CDN de Phaser); `activate` limpia cachés viejas y hace `clients.claim()`; el `fetch` es network-first con fallback a caché (incluye respuestas opacas del CDN).
 - **Aviso "NUEVA VERSIÓN DESCARGADA" (`main.js`)**: al registrar el SW se escucha `updatefound` → cuando el SW nuevo llega a `installed` **y** la página ya estaba controlada, se muestra el banner `#update-banner` con botón **ACTUALIZAR** (recarga). Para publicar una versión: subir el código y **bumpear `VERSION` en `sw.js`** (el navegador detecta el SW nuevo y dispara el aviso).
 - `CFG.VERSION` → `0.3-beta`.
@@ -322,6 +324,8 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **`net::ERR_CACHE_MISS` al arrancar desde el icono (Android):** el `fetch` network-first del SW a la `start_url` fallaba y, con la caché sin la copia del shell, el `respondWith` rechazaba y la navegación moría (la app no arrancaba desde el icono aunque sí desde la URL). Fixes:
   - `manifest.webmanifest`: `id`/`start_url` explícitos (`/index.html`) y `scope: "/"` (antes `"."`/`"."`, resolución frágil y redirección de raíz).
   - `sw.js` (v0.3.1): el handler de fetch **nunca rechaza** — si la red falla sirve la copia en caché (URL exacta o shell `./index.html`), y si no hay nada devuelve una página mínima de "sin conexión" en vez de ERR_CACHE_MISS; `cache.put` protegido en try/catch; atajo `navigator.onLine` para ir directo a caché estando offline. Requiere desinstalar y reinstalar la app instalada para renovar la WebAPK (la `start_url` queda grabada al instalar).
+- **Icono instalado en Android que no arranca (aunque el enlace sí):** se elimina `"orientation": "landscape"` del manifest (`sw.js` v0.3.2). El bloqueo de orientación en la WebAPK impide el arranque desde el launcher en algunos dispositivos (la actividad no llega a renderizar), mientras que abrir desde una URL sí funciona. La orientación ya la gestionan el overlay `#rotate-device` (portrait) y el Scale.FIT. Requiere desinstalar + borrar datos del sitio + reinstalar. **Resuelto.**
+- **Facebook Sharing Debugger: "La URL ha devuelto un código de respuesta HTTP incorrecto":** el crawler de Facebook recibía un **403** en `/` (bloqueo por IP de la protección anti-bot/WAF del hosting, no por User-Agent: nuestras peticiones con `facebookexternalhit` daban 200) y, además, `robots.txt` devolvía **500** (no existía el archivo y el hosting lo enrutaba a un handler que fallaba). Fixes: nuevo `robots.txt` en la raíz que permite todos los crawlers; el 403 restante es del hosting (excepción para `facebookexternalhit`/`facebookbot` o desactivar el anti-bot en el panel del proveedor). **WhatsApp ya lee la metainformación.**
 
 ## Pendientes / ideas futuras (opcional)
 - Sonido / música.
