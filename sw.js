@@ -4,8 +4,11 @@
 // Al publicar una nueva versión, sube el número de VERSION para que el
 // navegador detecte un SW nuevo y aparezca el aviso "NUEVA VERSIÓN DESCARGADA".
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 const RUNTIME = 'shooting-stars-' + VERSION + '-runtime';
+
+// Rutas del shell de la app, usadas como respaldo de navegación
+const SHELL_CANDIDATES = ['./index.html', './'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -42,28 +45,59 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+// Página mínima de "sin conexión" (último recurso, evita ERR_CACHE_MISS)
+function offlinePage() {
+  return new Response(
+    '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>SHOOTING STARS — SIN CONEXIÓN</title>' +
+    '<style>body{background:#05070f;color:#c8d2ea;font-family:monospace;display:flex;' +
+    'align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}' +
+    'h1{color:#4dd4ff;letter-spacing:2px}p{line-height:1.6}</style></head>' +
+    '<body><div><h1>SHOOTING STARS</h1><p>Sin conexión a internet.<br>' +
+    'Conéctate y vuelve a abrir la app.</p></div></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+// Busca la app en caché: primero la URL exacta de la petición, luego el shell
+async function shellFromCache(cache, req) {
+  const reqHit = await cache.match(req);
+  if (reqHit) return reqHit;
+  for (const key of SHELL_CANDIDATES) {
+    const hit = await cache.match(key);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   if (!req.url.startsWith('http')) return;
+  const isNavigate = req.mode === 'navigate';
 
   event.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
+
+    // Sin conexión: no intentar la red, servir la copia guardada
+    if (!navigator.onLine) {
+      const hit = await shellFromCache(cache, req);
+      return hit || offlinePage();
+    }
+
     try {
       const res = await fetch(req);
       if (res && (res.ok || res.type === 'opaque')) {
-        cache.put(req, res.clone());
+        try { await cache.put(req, res.clone()); } catch (e) { /* el cache put nunca debe romper la respuesta */ }
       }
       return res;
     } catch (err) {
-      // offline: se usa el respaldo guardado
-      const cached = await cache.match(req);
-      if (cached) return cached;
-      if (req.mode === 'navigate') {
-        const shell = await cache.match('./index.html');
-        if (shell) return shell;
-      }
-      throw err;
+      // La red falló (o el servidor no respondió): respaldo en caché
+      const hit = await shellFromCache(cache, req);
+      if (hit) return hit;
+      if (isNavigate) return offlinePage();
+      return new Response('', { status: 504, statusText: 'Offline' });
     }
   })());
 });

@@ -319,6 +319,9 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Texto `enemy_img` con fuente errónea:** evitar `tex.getSourceImage().width` (podía lanzar error si la textura no estaba lista); se usa `sprite.setDisplaySize(size, size)` para forzar el tamaño y `body.setSize(size, size, true)` para centrar el cuerpo.
 - **Barra del BOSS en negro hasta el primer disparo:** `showBossBar()` solo mostraba el fondo y el relleno rojo dependía de `boss-hurt`. Ahora `showBossBar()` dibuja la barra completa llamando a `setBossHealth(CFG.BOSS_LIFE)`.
 - **Imagen de último punto de vida que no salía:** `VARIANT_LIFE_MULT: 2.5` hacía que la vida nunca fuese exactamente 1 (2.5→1.5→0.5). Se fija a **3** para que la comprobación `life === 1` se cumpla.
+- **`net::ERR_CACHE_MISS` al arrancar desde el icono (Android):** el `fetch` network-first del SW a la `start_url` fallaba y, con la caché sin la copia del shell, el `respondWith` rechazaba y la navegación moría (la app no arrancaba desde el icono aunque sí desde la URL). Fixes:
+  - `manifest.webmanifest`: `id`/`start_url` explícitos (`/index.html`) y `scope: "/"` (antes `"."`/`"."`, resolución frágil y redirección de raíz).
+  - `sw.js` (v0.3.1): el handler de fetch **nunca rechaza** — si la red falla sirve la copia en caché (URL exacta o shell `./index.html`), y si no hay nada devuelve una página mínima de "sin conexión" en vez de ERR_CACHE_MISS; `cache.put` protegido en try/catch; atajo `navigator.onLine` para ir directo a caché estando offline. Requiere desinstalar y reinstalar la app instalada para renovar la WebAPK (la `start_url` queda grabada al instalar).
 
 ## Pendientes / ideas futuras (opcional)
 - Sonido / música.
