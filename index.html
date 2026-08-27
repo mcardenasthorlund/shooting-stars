@@ -2,14 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SHOOTING STARS</title>
+  <meta name="theme-color" content="#05070f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Shooting Stars">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="game">
     <img id="logo" src="assets/logo.png" alt="SHOOTING STARS">
+    <button id="fullscreen-btn" aria-label="Pantalla completa">&#9974;</button>
   </div>
+
+  <div id="update-banner" role="alert">
+    <span class="update-msg">NUEVA VERSIÓN DESCARGADA</span>
+    <button type="button">ACTUALIZAR</button>
+    <span class="update-close" role="button" aria-label="Cerrar">&#10005;</span>
+  </div>
+
+  <div id="rotate-device">
+    <div class="rotate-icon">&#8635;</div>
+    <p>GIRA TU DISPOSITIVO</p>
+    <span>El juego se juega en horizontal</span>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/objects/Player.js"></script>

@@ -35,6 +35,7 @@ class InputHandler {
 
   update(dt) {
     const player = this.player;
+    const scene = this.scene;
 
     // teclado solo si el ratón aún no se ha usado
     if (!this.mouseActive) {
@@ -44,6 +45,14 @@ class InputHandler {
       }
       if (keys.down.isDown || keys.s.isDown) {
         player.setGunAngle(player.gunAngle + (CFG.PLAYER_INTRO_SPEED * dt) / 1000);
+      }
+    }
+
+    // disparo continuo mientras se mantenga pulsado (ratón o dedo en pantalla)
+    if (scene.input.activePointer.isDown) {
+      const weapon = scene.getWeapon();
+      if (scene.time.now - scene.lastFireTime >= weapon.cooldown) {
+        scene.tryFire();
       }
     }
   }

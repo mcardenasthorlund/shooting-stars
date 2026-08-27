@@ -4,26 +4,37 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   background: #05070f;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
   font-family: monospace;
   image-rendering: pixelated;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
+/* El contenedor ocupa todo el viewport: Phaser escala el canvas para encajarlo (Scale.FIT) */
 #game {
   position: relative;
-  border: 2px solid #1a2340;
-  box-shadow: 0 0 40px rgba(90, 140, 255, 0.25);
+  width: 100%;
+  height: 100%;
 }
 
 #game #logo {
   position: absolute;
-  top: -90px;                 /* muestra el 75% superior, oculta el 25% inferior tras el canvas */
-  left: 50%;
+  left: 50%;                  /* la posición exacta la calcula JS siguiendo el canvas centrado */
+  top: -90px;
   transform: translateX(-50%);
   height: 120px;
   width: auto;
@@ -37,4 +48,132 @@ body {
 #game canvas {
   position: relative;
   z-index: 1;
+  display: block;
+  border: 2px solid #1a2340;
+  box-shadow: 0 0 40px rgba(90, 140, 255, 0.25);
+  touch-action: none;
+  image-rendering: pixelated;
+}
+
+/* pantallas pequeñas / táctiles: bordes más discretos */
+@media (max-width: 900px) {
+  #game canvas {
+    border-width: 1px;
+    box-shadow: 0 0 20px rgba(90, 140, 255, 0.2);
+  }
+}
+
+/* en pantallas bajas el logo superior sobra: se oculta */
+@media (max-height: 430px) {
+  #game #logo {
+    display: none !important;
+  }
+}
+
+/* ---- Botón de pantalla completa (solo táctil) ---- */
+#fullscreen-btn {
+  position: absolute;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(201, 226, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(10, 20, 40, 0.55);
+  color: #c9e2ff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  #fullscreen-btn {
+    display: flex;
+  }
+}
+
+/* ---- Aviso de nueva versión descargada ---- */
+#update-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(5, 7, 15, 0.92);
+  border: 1px solid #39ff6e;
+  border-radius: 8px;
+  color: #eafff1;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 0 24px rgba(57, 255, 110, 0.35);
+}
+
+#update-banner.visible {
+  display: flex;
+}
+
+#update-banner button {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: #05070f;
+  background: #39ff6e;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+#update-banner .update-close {
+  cursor: pointer;
+  color: #9aa7c8;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+/* ---- Overlay: gira tu dispositivo (vertical + táctil) ---- */
+#rotate-device {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #05070f;
+  color: #c8d2ea;
+  font-family: monospace;
+  text-align: center;
+}
+
+#rotate-device .rotate-icon {
+  font-size: 64px;
+  color: #4dd4ff;
+}
+
+#rotate-device p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 2px;
+}
+
+#rotate-device span {
+  font-size: 14px;
+  color: #6a7aa8;
+}
+
+@media (orientation: portrait) and (hover: none) and (pointer: coarse) {
+  #rotate-device {
+    display: flex;
+  }
 }

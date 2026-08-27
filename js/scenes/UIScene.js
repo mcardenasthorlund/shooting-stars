@@ -31,6 +31,11 @@ class UIScene extends Phaser.Scene {
       const x = 70 + i * 58;
       const y = H - 70;
       const back = this.add.rectangle(x, y, 50, 50, 0x1a2340).setOrigin(0.5, 0.5);
+      back.setInteractive({ useHandCursor: true });
+      back.on('pointerdown', () => {
+        const game = this.scene.get('GameScene');
+        if (game) game.activateSlot(i);
+      });
       this.add.text(x, y, String(i + 1), {
         fontFamily: 'monospace',
         fontSize: '14px',
@@ -226,7 +231,7 @@ class UIScene extends Phaser.Scene {
       color: '#9aa7c8',
     }).setOrigin(0.5, 0.5);
 
-    const hint = this.add.text(W / 2, H / 2 + 70, 'Pulsa ENTER para reiniciar', {
+    const hint = this.add.text(W / 2, H / 2 + 70, 'Pulsa ENTER o toca la pantalla para reiniciar', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#ffffff',
@@ -240,6 +245,7 @@ class UIScene extends Phaser.Scene {
     });
 
     this.input.keyboard.once('keydown-ENTER', this.restart, this);
+    this.input.once('pointerdown', this.restart, this);
   }
 
   restart() {
