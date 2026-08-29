@@ -55,6 +55,16 @@ class UIScene extends Phaser.Scene {
       this.slots.push({ back, icon, image });
     }
 
+    // contador de granadas restantes (a la derecha del inventario de power ups)
+    this.grenadeText = this.add.text(70 + CFG.INVENTORY_SIZE * 58 + 20, H - 70, '', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#ffb347',
+      fontStyle: 'bold',
+      align: 'left',
+    }).setOrigin(0, 0.5);
+    this.grenadeText.setVisible(false);
+
     // ---- Contador de puntos (abajo a la derecha) ----
     this.scoreText = this.add.text(W - 20, H - 40, 'PUNTOS: 0', {
       fontFamily: 'monospace',
@@ -194,6 +204,15 @@ class UIScene extends Phaser.Scene {
     if (!game || !game.player) return;
     this.setHealth(game.player.health);
     this.scoreText.setText('PUNTOS: ' + game.scoreSystem.score);
+
+    // contador de granadas restantes en el modo GRANADE
+    const grenades = game.grenadeShotsLeft || 0;
+    if (grenades > 0) {
+      this.grenadeText.setText('GRANADAS: ' + grenades);
+      this.grenadeText.setVisible(true);
+    } else {
+      this.grenadeText.setVisible(false);
+    }
   }
 
   showGameOver(score) {

@@ -42,12 +42,15 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
 - **Vida:** empiezas con **100**. La partida acaba cuando llegas a **0**.
 - **Power ups** (coge las estrellas que caen con tus balas y guárdalas en el inventario de 3 casillas):
   - 💛 **BIG BOY** — tus balas se hacen 3× más grandes durante 20s.
-  - 💚 **HEALING STATION** — cura el 50% de tu vida.
+  - 💚 **HEALING** — cura el 50% de tu vida.
   - 🧡 **BIG BOOM** — explosión de pantalla completa que daña a todos los enemigos.
-  - 💙 **RIOT SHIELD** — escudo azul que absorbe el daño antes que tu vida.
+  - 💙 **SHIELD** — escudo azul que absorbe el daño antes que tu vida.
+  - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás.
+  - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla.
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA** y comprar nuevas armas con tus puntos (BLASTER, REVOLVER, UZI).
-- **Fases:** al derrotar al BOSS superas una **fase** (WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
+- **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
+- **Sonido:** música de fondo en la partida, música propia al aparecer el BOSS, y efectos de sonido de disparo, explosión y daño.
 
 ---
 
@@ -58,6 +61,13 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 ### Power ups
 - [💛 **BIG BOY**](assets/Big_Boy.png) — hace tus balas 3× más grandes.
 - [🧡 **BIG BOOM**](assets/Big_Boom.png) — explosión de pantalla completa.
+- [💚 **HEALING**](assets/Heal.png) — cura el 50% de tu vida.
+- [💙 **SHIELD**](assets/Shield.png) — escudo que absorbe el daño.
+- [⏸ **TIMESTOP**](assets/Time_Stop.png) — congela a los enemigos.
+- [💣 **GRANADE**](assets/Granade.png) — dispara granadas parabólicas.
+
+### Fondo
+- [🪐 **Planeta protector**](assets/Back_Planet.png) — planeta de fondo pegado al borde izquierdo que protege al jugador.
 
 ### Enemigos
 - [👾 **BOSS**](assets/boss.png) — el jefe de cada fase.
@@ -92,6 +102,7 @@ SHOOTING STARS/
 ├── robots.txt               # permite a los crawlers (Facebook/WhatsApp)
 ├── css/style.css
 ├── assets/                  # Arte (logo, enemigos, BOSS, planetas, power ups)
+│   ├── audio/               # Música de fondo, del BOSS y de victoria
 │   └── icons/               # iconos PWA + imagen para compartir en redes
 └── js/
     ├── config.js            # constantes ajustables
@@ -109,13 +120,15 @@ SHOOTING STARS/
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
     │   ├── Star.js          # estrellas fugaces del fondo
     │   ├── Planet.js        # capas parallax de planetas
-    │   └── PowerUp.js       # estrella de power up que cae desde arriba
+    │   ├── PowerUp.js       # estrella de power up que cae desde arriba
+    │   └── Grenade.js       # granada parabólica del power up GRANADE
     └── systems/
         ├── InputHandler.js  # ratón (apuntar/disparar) + teclado
         ├── EnemySpawner.js  # oleadas crecientes + boss
         ├── ScoreSystem.js   # puntos por kill
         ├── RecordSystem.js  # mejor récord en localStorage
-        └── PowerUpSystem.js # spawn + inventario de power ups
+        ├── PowerUpSystem.js # spawn + inventario de power ups
+        └── SoundFX.js       # efectos de sonido procedurales (Web Audio)
 ```
 
 ---
@@ -135,7 +148,7 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **39 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda y la versión responsive/PWA, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **49 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 ---
 

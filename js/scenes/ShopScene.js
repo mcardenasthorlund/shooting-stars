@@ -224,6 +224,12 @@ class ShopScene extends Phaser.Scene {
     this.scene.stop('ShopScene');
     const game = this.scene.get('GameScene');
     if (game) {
+      // reanudar la música normal del juego tras salir de la tienda (con fundido)
+      if (game.game.music && !game.game.music.isPlaying) {
+        game.game.music.resume();
+        game.game.music.setVolume(0);
+        game.tweens.add({ targets: game.game.music, volume: 0.5, duration: 500, ease: 'Linear' });
+      }
       game.scene.resume();
       game.startWaveTransition();
     }
@@ -232,6 +238,8 @@ class ShopScene extends Phaser.Scene {
   surrender() {
     const game = this.scene.get('GameScene');
     if (game) this.game.records.submit(game.scoreSystem.score);
+    if (this.game.music && this.game.music.isPlaying) this.game.music.stop();
+    if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
     this.scene.stop('ShopScene');
     this.scene.stop('GameScene');
     this.scene.stop('UIScene');

@@ -7,6 +7,17 @@ class GameScene extends Phaser.Scene {
     const { WIDTH: W, HEIGHT: H } = CFG;
     this.gameOver = false;
 
+    // música de fondo de la partida (no suena en la pantalla de inicio)
+    if (this.game.music) this.game.music.stop();
+    this.game.music = this.sound.add('music', { loop: true, volume: 0.5 });
+    this.game.music.play();
+    // música del BOSS (se activa al aparecer el jefe)
+    if (this.game.bossMusic) this.game.bossMusic.stop();
+    this.game.bossMusic = this.sound.add('boss_music', { loop: true, volume: 0.5 });
+
+    // efectos de sonido procedurales
+    this.game.sfx = this.game.sfx || new SoundFX();
+
     // mostrar el logo HTML solo durante el juego
     const logo = document.getElementById('logo');
     if (logo) logo.style.display = 'block';
@@ -42,12 +53,20 @@ class GameScene extends Phaser.Scene {
       }),
     ];
 
+    // planeta de fondo que protege al jugador, pegado al borde izquierdo.
+    // Se crea DESPUÉS de estrellas y planetas parallax pero ANTES del jugador,
+    // para que el fondo pase por detrás de él y él quede por delante del jugador.
+    const backPlanet = this.add.image(0, H / 2, 'back_planet_img');
+    backPlanet.setOrigin(0, 0.5);
+
     this.player = new Player(this, CFG.PLAYER_X, CFG.PLAYER_Y);
     this.controls = new InputHandler(this, this.player);
 
     this.bullets = this.physics.add.group();
+    this.grenadeGroup = this.physics.add.group();
     this.lastFireTime = -CFG.FIRE_COOLDOWN;
     this.fireQueue = [];
+    this.grenadeShotsLeft = 0;
 
     this.spawner = new EnemySpawner(this);
     this.startTime = this.time.now;
@@ -61,6 +80,11 @@ class GameScene extends Phaser.Scene {
     this.tunnel = null;
     this.tunnelZ = 0;
     this.bossSpawnedThisWave = false;
+    this.shopOpened = false;
+    this.timestopActive = false;
+    this.timestopUntil = 0;
+    this.timestopOverlay = null;
+    this.timestopText = null;
 
     this.setupCollisions();
 
@@ -84,6 +108,7 @@ class GameScene extends Phaser.Scene {
 
   setupCollisions() {
     this.physics.add.overlap(this.bullets, this.spawner.enemies, this.onBulletEnemy, null, this);
+    this.physics.add.overlap(this.grenadeGroup, this.spawner.enemies, this.onGrenadeEnemy, null, this);
     this.physics.add.overlap(this.bullets, this.powerUpSystem.group, this.onBulletPowerUp, null, this);
   }
 
@@ -109,10 +134,44 @@ class GameScene extends Phaser.Scene {
         this.onBossKilled(handler, sprite);
       } else {
         this.spawnExplosion(sprite.x, sprite.y, CFG.ENEMY_EXPLOSION_RADIUS);
+        if (this.game.sfx) this.game.sfx.explosion();
         this.scoreSystem.add(handler.points);
         this.events.emit('enemy-killed', handler.points);
       }
     }
+  }
+
+  // impacto directo de una granada: 10 de daño + explosión en área
+  onGrenadeEnemy(grenadeSprite, enemySprite) {
+    const handler = enemySprite.getData('handler');
+    if (handler) {
+      this.handleHit(handler, enemySprite, CFG.GRANADE_DIRECT_DAMAGE);
+    }
+    this.explodeGrenade(grenadeSprite);
+  }
+
+  // explosión de la granada: 1/8 de pantalla + 5 de daño a los enemigos cercanos
+  explodeGrenade(grenadeSprite) {
+    if (!grenadeSprite || !grenadeSprite.active) return;
+    const cx = grenadeSprite.x;
+    const cy = grenadeSprite.y;
+    this.spawnExplosion(cx, cy, CFG.GRANADE_EXPLOSION_RADIUS);
+    if (this.game.sfx) this.game.sfx.explosion(0.85);
+
+    if (this.spawner) {
+      const list = this.spawner.enemies.getChildren().slice();
+      for (const s of list) {
+        if (!s.active) continue;
+        const dist = Phaser.Math.Distance.Between(cx, cy, s.x, s.y);
+        if (dist <= CFG.GRANADE_EXPLOSION_RADIUS) {
+          const h = s.getData('handler');
+          if (h) this.handleHit(h, s, CFG.GRANADE_EXPLOSION_DAMAGE);
+        }
+      }
+    }
+
+    const h = grenadeSprite.getData('handler');
+    if (h) h.destroy();
   }
 
   // activar el power up de la casilla indicada (0, 1 o 2)
@@ -139,6 +198,51 @@ class GameScene extends Phaser.Scene {
         this.player.setShield(CFG.RIOT_SHIELD_AMOUNT);
         this.events.emit('player-hurt', this.player.health);
         break;
+      case 'TIMESTOP':
+        this.activateTimeStop();
+        break;
+      case 'GRANADE':
+        this.grenadeShotsLeft = CFG.GRANADE_SHOTS;
+        this.fireQueue = []; // descartar pulsaciones previas en cola
+        break;
+    }
+  }
+
+  // congela a los enemigos unos segundos: pantalla grisácea + cuenta atrás
+  activateTimeStop() {
+    this.timestopUntil = this.time.now + CFG.TIMESTOP_DURATION;
+    this.timestopActive = true;
+
+    // congelar a los enemigos que haya en pantalla: velocidad a 0 para que la física los detenga
+    if (this.spawner) {
+      const list = this.spawner.enemies.getChildren().slice();
+      for (const s of list) {
+        if (s && s.active && s.body) s.body.setVelocity(0, 0);
+      }
+    }
+
+    const { WIDTH: W, HEIGHT: H } = CFG;
+    if (this.timestopOverlay) this.timestopOverlay.destroy();
+    if (this.timestopText) this.timestopText.destroy();
+
+    this.timestopOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x9aa7c8, 0.28).setDepth(100);
+    this.timestopText = this.add.text(W / 2, H / 2 - 120, '', {
+      fontFamily: 'monospace',
+      fontSize: '34px',
+      color: '#c8d2ea',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setDepth(101);
+  }
+
+  endTimeStop() {
+    this.timestopActive = false;
+    if (this.timestopOverlay) {
+      this.timestopOverlay.destroy();
+      this.timestopOverlay = null;
+    }
+    if (this.timestopText) {
+      this.timestopText.destroy();
+      this.timestopText = null;
     }
   }
 
@@ -162,6 +266,7 @@ class GameScene extends Phaser.Scene {
 
     // gran explosión que cubre toda la pantalla
     this.spawnExplosion(bossSprite.x, bossSprite.y, CFG.BOSS_EXPLOSION_RADIUS);
+    if (this.game.sfx) this.game.sfx.explosion(1);
 
     // elimina a todos los enemigos que queden en pantalla
     if (this.spawner) this.spawner.clearEnemies();
@@ -169,9 +274,60 @@ class GameScene extends Phaser.Scene {
     // fin de la alarma: los planetas vuelven a su color normal
     this.setPlanetDanger(false);
 
-    // pantalla de victoria + tienda (en vez de ir directo a la siguiente fase)
-    // se difiere para salir del callback de físicas antes de pausar la escena
-    this.time.delayedCall(0, () => this.openShop());
+    // se detiene la música del BOSS con fundido (la del juego se reanudará al salir de la tienda)
+    this.fadeMusic(this.game.bossMusic, 0, 500, () => {
+      if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
+    });
+
+    // se espera a que termine la explosión del BOSS y después suena la victoria
+    this.time.delayedCall(CFG.BOSS_EXPLOSION_DELAY, () => this.showVictory());
+  }
+
+  // fundido de volumen de una pista de música (Phaser tweenea la propiedad volume)
+  fadeMusic(sound, targetVolume, duration, onComplete) {
+    if (!sound) {
+      if (onComplete) onComplete();
+      return;
+    }
+    this.tweens.add({
+      targets: sound,
+      volume: targetVolume,
+      duration,
+      ease: 'Linear',
+      onComplete: () => {
+        if (onComplete) onComplete();
+      },
+    });
+  }
+
+  // muestra "VICTORY" mientras suena victoria.mp3 y luego abre el menú de la tienda
+  showVictory() {
+    if (this.shopOpened) return;
+    const { WIDTH: W, HEIGHT: H } = CFG;
+
+    const victoryText = this.add.text(W / 2, H / 2 - 40, 'VICTORY', {
+      fontFamily: 'monospace',
+      fontSize: '72px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setDepth(90).setAlpha(0).setScale(0.6);
+    this.tweens.add({
+      targets: victoryText,
+      alpha: 1,
+      scale: { from: 0.6, to: 1 },
+      duration: 500,
+      ease: 'Back.easeOut',
+    });
+
+    // victoria.mp3 suena una sola vez; la tienda se abre al terminar el audio
+    const victory = this.sound.add('victory', { volume: 1 });
+    const durationMs = Math.max(2000, (victory.totalDuration || 3) * 1000);
+    victory.play();
+
+    this.time.delayedCall(durationMs, () => {
+      if (victoryText.active) victoryText.destroy();
+      this.openShop();
+    });
   }
 
   getWeapon() {
@@ -180,6 +336,8 @@ class GameScene extends Phaser.Scene {
 
   // pausa la partida y muestra el menú de victoria del BOSS (con la tienda)
   openShop() {
+    if (this.shopOpened) return;
+    this.shopOpened = true;
     this.scene.pause();
     this.scene.launch('ShopScene', { score: this.scoreSystem.score });
   }
@@ -277,6 +435,16 @@ class GameScene extends Phaser.Scene {
   bossAlarm() {
     this.setPlanetDanger(true);
 
+    // música: fundido de salida de la del juego y fundido de entrada de la del BOSS
+    this.fadeMusic(this.game.music, 0, 500, () => {
+      if (this.game.music && this.game.music.isPlaying) this.game.music.pause();
+    });
+    if (this.game.bossMusic) {
+      if (!this.game.bossMusic.isPlaying) this.game.bossMusic.play();
+      this.game.bossMusic.setVolume(0);
+      this.fadeMusic(this.game.bossMusic, 0.5, 500);
+    }
+
     const { WIDTH: W, HEIGHT: H } = CFG;
     const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xff2222).setAlpha(0);
 
@@ -355,12 +523,24 @@ class GameScene extends Phaser.Scene {
 
   endGame() {
     this.gameOver = true;
+    if (this.game.music && this.game.music.isPlaying) this.game.music.stop();
+    if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
     this.scene.pause();
     const ui = this.scene.get('UIScene');
     if (ui) ui.showGameOver(this.scoreSystem.score);
   }
 
   tryFire() {
+    // en modo GRANADE: un disparo por pulsación, ignorando las pulsaciones
+    // realizadas durante el segundo de espera (no se ponen en cola)
+    if (this.grenadeShotsLeft > 0) {
+      const now = this.time.now;
+      if (now - this.lastFireTime >= CFG.GRANADE_COOLDOWN) {
+        this.lastFireTime = now;
+        this.doFire();
+      }
+      return;
+    }
     this.fireQueue.push(this.time.now);
   }
 
@@ -368,16 +548,37 @@ class GameScene extends Phaser.Scene {
     const p = this.player;
     const tipX = p.getGunTipX();
     const tipY = p.getGunTipY();
+
+    // modo GRANADE: dispara granadas con trayectoria parabólica en vez de balas
+    if (this.grenadeShotsLeft > 0) {
+      this.grenadeShotsLeft--;
+      const grenade = new Grenade(this, tipX, tipY, p.getGunRadians());
+      this.grenadeGroup.add(grenade.sprite);
+      if (this.game.sfx) this.game.sfx.shot(0.4);
+      return;
+    }
+
     const sizeFactor = this.time.now < this.bigBoyUntil ? CFG.BIG_BOY_SIZE_MULT : 1;
     const weapon = this.getWeapon();
     const bullet = new Bullet(this, tipX, tipY, p.getGunRadians(), sizeFactor, weapon);
     this.bullets.add(bullet.sprite);
     bullet.sprite.setData('life', 0);
     bullet.sprite.setData('handler', bullet);
+    if (this.game.sfx) this.game.sfx.shot();
   }
 
   update(time, delta) {
     if (this.gameOver) return;
+
+    // temporizador del TIME STOP: actualiza la cuenta atrás y lo termina al agotarse
+    if (this.timestopActive) {
+      if (this.time.now >= this.timestopUntil) {
+        this.endTimeStop();
+      } else if (this.timestopText) {
+        const remain = Math.max(0, (this.timestopUntil - this.time.now) / 1000);
+        this.timestopText.setText('TIME STOP  ' + remain.toFixed(1) + 's');
+      }
+    }
 
     // animar explosiones siempre (incluida la gran explosión del BOSS)
     this.explosions = this.explosions.filter((e) => e.update(delta));
@@ -407,8 +608,8 @@ class GameScene extends Phaser.Scene {
 
     const elapsed = this.time.now - this.startTime;
 
-    // spawn y movimiento de enemigos / boss
-    if (this.spawner) {
+    // spawn y movimiento de enemigos / boss (congelados durante el TIME STOP)
+    if (this.spawner && !this.timestopActive) {
       this.spawner.update(time, elapsed);
       this.spawner.updateAll(delta, time);
     }
@@ -416,10 +617,22 @@ class GameScene extends Phaser.Scene {
     // gestionar disparos en cola respetando el cooldown del arma (base de tiempo de escena)
     const now = this.time.now;
     const weapon = this.getWeapon();
-    if (this.fireQueue.length > 0 && now - this.lastFireTime >= weapon.cooldown) {
+    const fireCooldown = this.grenadeShotsLeft > 0 ? CFG.GRANADE_COOLDOWN : weapon.cooldown;
+    if (this.fireQueue.length > 0 && this.grenadeShotsLeft <= 0 && now - this.lastFireTime >= fireCooldown) {
       this.fireQueue.shift();
       this.doFire();
       this.lastFireTime = now;
+    }
+
+    // granadas: integran su trayectoria y explotan al agotar su alcance (3/4 de pantalla)
+    if (this.grenadeGroup) {
+      const grenades = this.grenadeGroup.getChildren().slice();
+      for (const g of grenades) {
+        if (!g.active) continue;
+        const h = g.getData('handler');
+        if (h) h.update(delta);
+        if (h && h.outOfRange()) this.explodeGrenade(g);
+      }
     }
 
     // destruir balas fuera de pantalla o tras su vida máxima (snapshot para seguridad)

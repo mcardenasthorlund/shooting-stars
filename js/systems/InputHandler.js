@@ -3,6 +3,7 @@ class InputHandler {
     this.scene = scene;
     this.player = player;
     this.mouseActive = false;
+    this.suppressAutoFire = false;
 
     // teclado (alternativa al ratón)
     this.keys = scene.input.keyboard.addKeys({
@@ -48,8 +49,18 @@ class InputHandler {
       }
     }
 
+    // Durante el modo GRANADE se desactiva el disparo continuo (una granada por pulsación).
+    // Al terminar el power up, se espera a soltar el botón antes de reanudar el disparo continuo,
+    // para que el jugador no empiece a disparar solo sin volver a pulsar.
+    const grenadeMode = scene.grenadeShotsLeft > 0;
+    if (grenadeMode) {
+      this.suppressAutoFire = true;
+    } else if (!scene.input.activePointer.isDown) {
+      this.suppressAutoFire = false;
+    }
+
     // disparo continuo mientras se mantenga pulsado (ratón o dedo en pantalla)
-    if (scene.input.activePointer.isDown) {
+    if (scene.input.activePointer.isDown && !grenadeMode && !this.suppressAutoFire) {
       const weapon = scene.getWeapon();
       if (scene.time.now - scene.lastFireTime >= weapon.cooldown) {
         scene.tryFire();

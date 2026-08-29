@@ -13,9 +13,17 @@ class BootScene extends Phaser.Scene {
     this.load.image('boss_img3', CFG.BOSS_IMG3);
     this.load.image('powerup_bigboy_img', 'assets/Big_Boy.png');
     this.load.image('powerup_bigboom_img', 'assets/Big_Boom.png');
+    this.load.image('powerup_heal_img', 'assets/Heal.png');
+    this.load.image('powerup_shield_img', 'assets/Shield.png');
+    this.load.image('powerup_timestop_img', 'assets/Time_Stop.png');
+    this.load.image('powerup_granade_img', 'assets/Granade.png');
     this.load.image('planet1', 'assets/Planeta_Fondo_N1.png');
     this.load.image('planet2', 'assets/Planeta_Fondo_N2.png');
     this.load.image('planet3', 'assets/Planeta_Fondo_N3.png');
+    this.load.image('back_planet_img', 'assets/Back_Planet.png');
+    this.load.audio('music', 'assets/audio/musica.mp3');
+    this.load.audio('boss_music', 'assets/audio/musica-boss.mp3');
+    this.load.audio('victory', 'assets/audio/victoria.mp3');
   }
 
   create() {
@@ -237,6 +245,20 @@ class BootScene extends Phaser.Scene {
   }
 
   start() {
+    // Reinicio garantizado de una partida anterior: al reutilizarse la instancia
+    // de GameScene (tras game over o surrender) hay que forzar que la dificultad,
+    // la fase y el reloj de spawns vuelvan a su valor inicial.
+    this.scene.stop('GameScene');
+    this.scene.stop('UIScene');
+    const gs = this.scene.get('GameScene');
+    if (gs) {
+      gs.wave = 1;
+      gs.difficulty = 1;
+      gs.startTime = this.time.now;
+      gs.inTransition = false;
+      gs.gameOver = false;
+      if (gs.spawner) gs.spawner.resetWave();
+    }
     this.scene.start('GameScene');
     this.scene.launch('UIScene');
   }

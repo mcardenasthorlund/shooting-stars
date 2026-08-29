@@ -66,6 +66,7 @@ class EnemySpawner {
         s.setData('passedLine', true);
         this.scene.player.damage((CFG.MAX_HEALTH * CFG.CONTACT_DAMAGE_PERCENT) / 100);
         this.scene.events.emit('player-hurt', this.scene.player.health);
+        if (this.scene.game.sfx) this.scene.game.sfx.damage();
         this.scene.spawnShieldExplosion(s.x, s.y);
         this.scene.spawnShieldFlash();
         s.destroy();

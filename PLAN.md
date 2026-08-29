@@ -54,6 +54,16 @@
 | 37 | Power ups `BIG BOY`/`BIG BOOM` muestran su PNG en el inventario | ✅ |
 | 38 | TIENDA de armas: menú victoria BOSS (SHOP/CONTINUE/SURRENDER), compra/equipado | ✅ |
 | 39 | Responsive (Scale.FIT), táctil (disparo/apuntado/power ups/UI) + PWA instalable/offline | ✅ |
+| 40 | Reset de dificultad/fase garantizado al terminar partida (game over y SURRENDER) | ✅ |
+| 41 | Planeta de fondo `Back_Planet.png` protector pegado al borde izq (fondo pasa por detrás) | ✅ |
+| 42 | Power ups HEALING (`Heal.png`) y SHIELD (`Shield.png`) con sprite propio | ✅ |
+| 43 | Power up **TIMESTOP** (`Time_Stop.png`): congela enemigos + pantalla gris + cuenta atrás 5s | ✅ |
+| 44 | Power up **GRANADE** (`Granade.png`): 10 granadas parabólicas, explosión 1/8 pantalla | ✅ |
+| 45 | Contador de granadas restantes junto al inventario | ✅ |
+| 46 | Música de fondo en partida (`musica.mp3`), música de BOSS (`musica-boss.mp3`) con fades | ✅ |
+| 47 | Efectos de sonido procedurales (Web Audio): disparo, explosión, daño (`SoundFX`) | ✅ |
+| 48 | Power ups cada 30s (`POWER_UP_SPAWN_INTERVAL`) | ✅ |
+| 49 | Victoria BOSS: `victoria.mp3` + mensaje "VICTORY" y tienda al terminar el audio | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -79,13 +89,15 @@ SHOOTING STARS/
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
     │   ├── Star.js          # estrellas fugaces del fondo
     │   ├── Planet.js        # capas parallax de planetas
-    │   └── PowerUp.js       # estrella de power up que cae desde arriba
+    │   ├── PowerUp.js       # estrella de power up que cae desde arriba
+    │   └── Grenade.js       # granada parabólica del power up GRANADE
     └── systems/
         ├── InputHandler.js  # ratón (apuntar/disparar) + teclado
         ├── EnemySpawner.js  # oleadas crecientes + boss
         ├── ScoreSystem.js   # puntos por kill
         ├── RecordSystem.js  # mejor récord en localStorage
-        └── PowerUpSystem.js # spawn + inventario de power ups
+        ├── PowerUpSystem.js # spawn + inventario de power ups
+        └── SoundFX.js       # efectos de sonido procedurales (Web Audio)
 ```
 
 ## Progreso detallado
@@ -298,7 +310,56 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Compartir en redes**: `index.html` con Open Graph + Twitter Card (`og:title/description/url`, `og:image` absoluta `https://shootingstars.ideasypruebas2.es/assets/icons/og-image.png`, 1200×630) para que WhatsApp/redes muestren logo + descripción. Nuevo `robots.txt` en la raíz que permite a todos los crawlers (`facebookexternalhit`, `facebookbot`, etc.).
 - **Service Worker `sw.js` (network-first)**: el contenido **siempre se busca en internet**; la caché runtime solo es respaldo offline (nunca estanca versiones). `install` hace `skipWaiting()` + calentamiento ligero de la caché (shell + CDN de Phaser); `activate` limpia cachés viejas y hace `clients.claim()`; el `fetch` es network-first con fallback a caché (incluye respuestas opacas del CDN).
 - **Aviso "NUEVA VERSIÓN DESCARGADA" (`main.js`)**: al registrar el SW se escucha `updatefound` → cuando el SW nuevo llega a `installed` **y** la página ya estaba controlada, se muestra el banner `#update-banner` con botón **ACTUALIZAR** (recarga). Para publicar una versión: subir el código y **bumpear `VERSION` en `sw.js`** (el navegador detecta el SW nuevo y dispara el aviso).
-- `CFG.VERSION` → `0.3-beta`.
+- `CFG.VERSION` → `0.4-beta` (y `VERSION` en `sw.js` → `0.4.0`).
+
+## Sesión actual (planeta protector, nuevos power ups y sonido)
+
+### 40. Reset de dificultad al terminar partida ✅
+- `BootScene.start()` ahora fuerza un reinicio limpio: `stop()` de `GameScene`/`UIScene` y reseteo explícito de `wave=1`, `difficulty=1`, `startTime`, `inTransition=false`, `gameOver=false` y `spawner.resetWave()` antes de lanzar la partida. Así la dificultad/fase se resetean correctamente venga de game over o de SURRENDER (que dejaba la escena pausada y arrastraba el estado).
+
+### 41. Planeta de fondo protector ✅
+- `assets/Back_Planet.png` (90×600, pegado al borde izquierdo, ocupa toda la altura) como planeta que protege al jugador (`back_planet_img`, `CFG.BACK_PLANET_SIZE: 90`).
+- Se crea en `GameScene` **después** de estrellas y planetas parallax pero **antes** del jugador (misma profundidad, orden de creación), por lo que estrellas y planetas de fondo pasan **por detrás** de él y el jugador queda delante.
+- Bug resuelto: un `setDepth(-1)` inicial lo ocultaba tras el `bg` (fondo de pantalla).
+
+### 42. Power ups HEALING y SHIELD con sprite propio ✅
+- `config.js`: `HEALING` gana `img: 'powerup_heal_img'` y `SHIELD` gana `img: 'powerup_shield_img'`.
+- `BootScene.preload()` carga `assets/Heal.png` y `assets/Shield.png`.
+- `PowerUp.js`: la estrella que cae usa la imagen propia (`setDisplaySize(CFG.POWER_UP_IMG_SIZE, ...)`, 40px) si el tipo tiene `img`; el inventario ya mostraba el PNG automáticamente.
+
+### 43. Power up TIMESTOP ✅
+- Nuevo tipo `TIMESTOP` (`Time_Stop.png`): al activarse congela a los enemigos durante `TIMESTOP_DURATION: 5000` ms, muestra una capa grisácea (`0x9aa7c8` alpha 0.28) y un contador `TIME STOP X.Xs` descendente.
+- `GameScene.activateTimeStop()` pone la velocidad de los cuerpos a 0 (`body.setVelocity(0,0)`) y durante el time stop no se llama a `spawner.update/updateAll`, por lo que los enemigos quedan detenidos (las balas del jugador siguen).
+- Bug resuelto: inicialmente solo se omitía `updateAll`, pero la velocidad persistente de la física seguía moviéndolos; hubo que ponerla a 0.
+
+### 44. Power up GRANADE ✅
+- Nuevo tipo `GRANADE` (`Granade.png`): al activarse disparas **10 granadas** en lugar de balas con **1s de espera** entre disparos.
+- `Grenade.js` (nuevo): proyectil con **trayectoria parabólica tipo cañón** (gravedad acumulando en `vy`), rotación, alcance de **3/4 de pantalla** (`GRANADE_RANGE: 600`).
+- Impacto directo: **10 de daño**; explosión de **1/8 de pantalla** (`GRANADE_EXPLOSION_RADIUS: 100`) que hace **5 de daño** en área (`GRANADE_EXPLOSION_DAMAGE`).
+- Bug resuelto: las granadas se quedaban pegadas al jugador porque al añadir el sprite al grupo de física se perdía la velocidad del cuerpo; se sustituye por **integración manual** de la trayectoria sincronizando `body.position` para las colisiones.
+- Fuego: cada pulsación dispara una sola granada e **ignora los clicks durante el segundo de espera** (no se ponen en cola); al terminar el power up se espera a soltar el botón antes de reanudar el disparo continuo (evita que el jugador dispare solo sin volver a pulsar).
+
+### 45. Contador de granadas restantes ✅
+- `UIScene`: texto `GRANADAS: N` (naranja) a la derecha del inventario de power ups, visible solo mientras queden granadas (se actualiza por polling en `update()`).
+
+### 46. Música de fondo y del BOSS con fades ✅
+- `BootScene.preload()` carga `musica.mp3` (`music`) y `musica-boss.mp3` (`boss_music`).
+- `GameScene.create()` crea/reproduce la música normal del juego (solo en partida, no en el menú).
+- Al aparecer el BOSS (`bossAlarm`): **fade cruzado** — la del juego baja a 0 y se pausa, la del boss sube de 0 a 0.5 (`fadeMusic()`, helper que tweenea `volume`).
+- Al matar al BOSS: la del boss se apaga con fundido y se detiene; al salir de la tienda (`continueGame`) la del juego reanuda con fundido de entrada.
+- Se detienen ambas en `endGame()` y `surrender()`.
+
+### 47. Efectos de sonido procedurales ✅
+- Nuevo `SoundFX.js` (Web Audio API, sin archivos): `explosion()` (ruido + paso bajo), `shot()` (blip descendente), `damage()` (tono grave + golpe).
+- `GameScene`: disparo en `doFire()`, explosión al matar enemigos/BOSS y en granadas, daño al cruzar la línea (en `EnemySpawner.updateAll`). El AudioContext se reanuda en cada reproducción (autoplay).
+
+### 48. Power ups cada 30s ✅
+- `POWER_UP_SPAWN_INTERVAL` de 90000 → **30000** ms.
+
+### 49. Victoria del BOSS ✅
+- Al derrotar al BOSS: se espera `BOSS_EXPLOSION_DELAY: 550` ms a que termine la gran explosión, luego suena `victoria.mp3` una vez y aparece el mensaje **"VICTORY"** (dorado, animado).
+- La tienda se abre al terminar el audio (duración calculada con `victory.totalDuration`, con mínimo 2s). Guard `shopOpened` para no abrirla dos veces.
+- Bug resuelto: antes el sonido sonaba antes de la explosión y el mensaje no aparecía (el evento `complete` podía dispararse al instante si el audio no se reproducía y destruía el texto); ahora el mensaje y la apertura van ligados a la duración real del audio.
 
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.
@@ -328,7 +389,7 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Facebook Sharing Debugger: "La URL ha devuelto un código de respuesta HTTP incorrecto":** el crawler de Facebook recibía un **403** en `/` (bloqueo por IP de la protección anti-bot/WAF del hosting, no por User-Agent: nuestras peticiones con `facebookexternalhit` daban 200) y, además, `robots.txt` devolvía **500** (no existía el archivo y el hosting lo enrutaba a un handler que fallaba). Fixes: nuevo `robots.txt` en la raíz que permite todos los crawlers; el 403 restante es del hosting (excepción para `facebookexternalhit`/`facebookbot` o desactivar el anti-bot en el panel del proveedor). **WhatsApp ya lee la metainformación.**
 
 ## Pendientes / ideas futuras (opcional)
-- Sonido / música.
 - Menú de dificultad.
 - Tabla de mejores puntuaciones (top scores).
 - BOSS con fases o patrones de ataque.
+- Más pistas musicales / ajuste de volumen en opciones.
