@@ -3,6 +3,7 @@ class Player {
     this.scene = scene;
     this.sprite = scene.add.graphics({ x, y });
     this.gun = scene.add.graphics({ x, y });
+    this.gunImg = scene.add.image(x, y, 'weapon_revolver_img').setOrigin(0, 0.5).setVisible(false);
     this.gunAngle = 0;            // grados, en rango [-90, 90]
     this.health = CFG.MAX_HEALTH;
     this.shield = 0;
@@ -10,6 +11,7 @@ class Player {
     this.fireLock = false;
     this.draw();
     this.drawGun();
+    this.setWeapon(this.weapon);
   }
 
   draw() {
@@ -40,7 +42,32 @@ class Player {
 
   setGunAngle(deg) {
     this.gunAngle = Phaser.Math.Clamp(deg, CFG.GUN_MIN_ANGLE, CFG.GUN_MAX_ANGLE);
-    this.gun.rotation = Phaser.Math.DegToRad(this.gunAngle);
+    const rad = Phaser.Math.DegToRad(this.gunAngle);
+    this.gun.rotation = rad;
+    if (this.gunImg) this.gunImg.rotation = rad;
+  }
+
+  // cambia el arma equipada y su aspecto en el cañón:
+  // BLASTER usa el cañón procedural por defecto; las demás muestran el sprite del arma
+  setWeapon(key) {
+    this.weapon = key;
+    const w = CFG.WEAPONS[key];
+    if (!w || !w.img || key === CFG.DEFAULT_WEAPON) {
+      this.gun.visible = true;
+      this.gunImg.visible = false;
+      return;
+    }
+    this.gun.visible = false;
+    const tex = this.scene.textures.get(w.img);
+    if (!tex || !tex.getSourceImage || !tex.getSourceImage().width) return;
+    const nw = tex.getSourceImage().width;
+    const nh = tex.getSourceImage().height;
+    const base = 52; // mismo tamaño que antes (el doble para armas no-BLASTER)
+    const scale = base / nw;
+    this.gunImg.setTexture(w.img).setScale(scale);
+    // se baja un poco en vertical para que las balas parezcan salir de la boca del arma
+    this.gunImg.setPosition(this.sprite.x, this.sprite.y + 6);
+    this.gunImg.setVisible(true);
   }
 
   getGunRadians() {

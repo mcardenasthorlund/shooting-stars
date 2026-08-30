@@ -15,15 +15,15 @@ class EnemySpawner {
   }
 
   update(time, elapsed) {
-    // BOSS: aparece una sola vez a los 60s
+    // BOSS: aparece una sola vez a los 60s (tiempo relativo al inicio de la partida)
     if (!this.bossSpawned && elapsed >= CFG.BOSS_TIME) {
       this.spawnBoss();
     }
 
-    // spawn de enemigos según intervalo progresivo
-    if (time >= this.nextSpawnTime) {
+    // spawn de enemigos según intervalo progresivo (tiempo relativo al inicio de partida)
+    if (elapsed >= this.nextSpawnTime) {
       this.spawnEnemy(elapsed);
-      this.nextSpawnTime = time + this.currentInterval(elapsed);
+      this.nextSpawnTime = elapsed + this.currentInterval(elapsed);
     }
   }
 

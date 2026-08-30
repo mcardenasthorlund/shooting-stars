@@ -17,6 +17,13 @@ class BootScene extends Phaser.Scene {
     this.load.image('powerup_shield_img', 'assets/Shield.png');
     this.load.image('powerup_timestop_img', 'assets/Time_Stop.png');
     this.load.image('powerup_granade_img', 'assets/Granade.png');
+    this.load.image('weapon_revolver_img', 'assets/Revolver.png');
+    this.load.image('weapon_shotgun_img', 'assets/Shotgun.png');
+    this.load.image('weapon_uzi_img', 'assets/Uzi.png');
+    this.load.image('shop_img', 'assets/tienda.png');
+    this.load.image('shop_img3', 'assets/tienda3.png');
+    this.load.image('shop_img4', 'assets/tienda4.png');
+    this.load.image('shop_img5', 'assets/tienda5.png');
     this.load.image('planet1', 'assets/Planeta_Fondo_N1.png');
     this.load.image('planet2', 'assets/Planeta_Fondo_N2.png');
     this.load.image('planet3', 'assets/Planeta_Fondo_N3.png');
@@ -28,6 +35,22 @@ class BootScene extends Phaser.Scene {
 
   create() {
     const { WIDTH: W, HEIGHT: H } = CFG;
+
+    // genera el sprite de la nave del jugador para el arma BLASTER
+    if (!this.textures.exists('player_img')) {
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      const ox = 13, oy = 12;
+      g.fillStyle(0x4dd4ff, 1);
+      g.fillRect(ox - 8, oy - 10, 16, 20);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(ox - 3, oy - 4, 6, 8);
+      g.fillStyle(0x0a2a3a, 1);
+      g.fillRect(ox - 4, oy + 4, 8, 3);
+      g.fillStyle(0xff5a5a, 1);
+      g.fillRect(ox - 11, oy - 8, 3, 16);
+      g.generateTexture('player_img', 24, 24);
+      g.destroy();
+    }
 
     // ocultar el logo HTML al estar en la página inicial
     const htmlLogo = document.getElementById('logo');
@@ -255,6 +278,7 @@ class BootScene extends Phaser.Scene {
       gs.wave = 1;
       gs.difficulty = 1;
       gs.startTime = this.time.now;
+      gs.gameplayTime = 0;
       gs.inTransition = false;
       gs.gameOver = false;
       if (gs.spawner) gs.spawner.resetWave();

@@ -361,6 +361,49 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - La tienda se abre al terminar el audio (duración calculada con `victory.totalDuration`, con mínimo 2s). Guard `shopOpened` para no abrirla dos veces.
 - Bug resuelto: antes el sonido sonaba antes de la explosión y el mensaje no aparecía (el evento `complete` podía dispararse al instante si el audio no se reproducía y destruía el texto); ahora el mensaje y la apertura van ligados a la duración real del audio.
 
+## Sesión actual (mejoras de tienda, armas y gameplay)
+
+### 50. Victoria y tienda para todos los BOSS ✅
+- Bug: `shopOpened` solo se reseteaba en `create()`, así que tras el 1er BOSS + CONTINUE quedaba `true` y bloqueaba `showVictory()`/`openShop()` (sin mensaje VICTORY, ni `victoria.mp3`, ni tienda en los jefes siguientes). Ahora `beginNextWave()` resetea `shopOpened = false`, por lo que el ciclo victoria → tienda se repite en cada oleada.
+
+### 51. Atajos de teclado nuevos ✅
+- **Shift+Z** (`GameScene`): fuerza la pantalla de victoria y después la tienda (`triggerVictory()` apaga la música del BOSS y llama a `showVictory()`).
+- **Shift+X** (`GameScene`): suma **10.000 puntos** al marcador (emit `enemy-killed` actualiza el HUD).
+
+### 52. Temporizador de aparición ligado al inicio de partida ✅
+- Bug: `elapsed = this.time.now - this.startTime` dependía del reloj global de Phaser (que sigue contando desde el arranque/menú): esperando en el menú, el BOSS aparecía a los pocos segundos de empezar a jugar.
+- Fix: `GameScene` mantiene `this.gameplayTime` (ms) que arranca en 0 al empezar la partida y suma `delta` cada frame; se pasa como `elapsed` al spawner (BOSS y enemigos). Se resetea en `create()`, en `beginNextWave()` y como fallback en `BootScene.start()`.
+- `EnemySpawner.update()` también usa `elapsed` para la cadencia de enemigos (antes usaba el reloj global `time`).
+
+### 53. Service Worker desactivado en localhost ✅
+- `main.js`: si el host es `localhost`/`127.0.0.1` se **desregistra** cualquier SW instalado y no se registra ninguno (evita `ERR_CACHE_MISS` y la ralentización por fallos de fetch en desarrollo). En producción se mantiene el registro con el aviso de nueva versión.
+
+### 54. Arma SHOTGUN + balanceo ✅
+- **SHOTGUN** (`config.js`): daño 2, cadencia 800ms (0.8s), coste 200, 3 balas en abanico a **-10° / 0° / +10°** (`spread: true`, `pellets: 3`, `spreadAngle: 10`).
+- `GameScene.doFire()`/`fireBullet()`: las armas con `spread` disparan varias balas a la vez en abanico.
+- Balanceo: **REVOLVER** daño 3, **UZI** coste 500. La tienda ordena las armas por coste ascendente.
+- Sprites de armas: `Revolver.png`, `Shotgun.png`, `Uzi.png` cargados y mostrados a la izquierda del nombre en la lista.
+
+### 55. Tienda rediseñada ✅
+- Caja de descripción a la derecha de los botones (se activa al pulsar un arma) con sprite del arma (ajustado al ancho disponible).
+- Imagen `tienda.png` en el lateral derecho; **ciclo aleatorio**: cada 5-10s cambia a `tienda3.png`/`tienda4.png` (0.5s, o **2s** si es `tienda4`) y vuelve a `tienda.png`.
+- Al confirmar una compra, la imagen pasa a `tienda5.png` durante **2s** y luego reanuda el ciclo.
+- Botones CONFIRMAR/CANCELAR dentro de la caja (en el lugar de COMPRAR); COMPRAR se oculta al pulsarlo y reaparece al CANCELAR.
+- `makeButton` ahora devuelve un **contenedor** (rectángulo + texto), para que `setVisible()` oculte el botón completo.
+
+### 56. Sistema de armas compradas + EQUIPAR ✅
+- Armas compradas guardadas por partida (`this.game.ownedWeapons`, **se reinician al iniciar nueva partida** — ya no en localStorage).
+- Al comprar: se descuentan los puntos (`spend()`), se añade a las poseídas, se equipa y aparece un **tick verde ✔** a la derecha del nombre.
+- Botón **EQUIPAR** en vez de COMPRAR si el arma ya está comprada; el arma activa muestra EQUIPAR **gris y deshabilitado** (no se puede re-equipar ni hace hover verde).
+- Si no hay puntos suficientes, **no se muestra el botón COMPRAR**.
+- **BLASTER** siempre disponible (aparece primero, coste 0), con sprite de la nave del jugador (`player_img`, generada en `BootScene.create()`).
+
+### 57. Cañón del jugador con sprite del arma ✅
+- `Player.setWeapon(key)`: si el arma no es BLASTER, la parte móvil (cañón) muestra el **sprite del arma equipada** (doble tamaño, 52px, bajado 6px en vertical para que las balas parezcan salir de la boca); BLASTER usa el cañón procedural por defecto. `setGunAngle()` rota también el sprite.
+
+### 58. Fix: error al arrancar por `loadOwned` ✅
+- Bug: `ShopScene.loadOwned()` accedía a `this.game` desde el **constructor** (cuando aún no está asignado) → `Uncaught TypeError: Cannot read properties of undefined (reading 'ownedWeapons')`. Se movió la llamada a `create()`, donde `this.game` ya existe.
+
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.
 - Prueba en navegador pendiente: abrir desde un **servidor HTTP local** (la PWA/el service worker requieren http/https, no `file://`). Probar: escalado móvil (landscape), apuntado/disparo por toque, power ups por toque, botón fullscreen, instalación como PWA, actualización (bumpear `VERSION` en `sw.js` → banner → ACTUALIZAR) y modo offline.

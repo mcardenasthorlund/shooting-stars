@@ -56,22 +56,33 @@ if (fsBtn) {
 }
 
 // ---- PWA: registro del service worker + aviso de nueva versión ----
+// En localhost (desarrollo) se desactiva el SW: se desregistra cualquier copia
+// ya instalada para evitar fallos de fetch (ERR_CACHE_MISS) que ralentizan la carga.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // true si la página ya estaba controlada por un SW (para no avisar en la 1ª instalación)
-    const hadController = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register('sw.js').then((reg) => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && hadController) {
-            showUpdateBanner();
-          }
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (isLocalhost) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      });
+    });
+  } else {
+    window.addEventListener('load', () => {
+      // true si la página ya estaba controlada por un SW (para no avisar en la 1ª instalación)
+      const hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && hadController) {
+              showUpdateBanner();
+            }
+          });
         });
       });
     });
-  });
+  }
 }
 
 function showUpdateBanner() {

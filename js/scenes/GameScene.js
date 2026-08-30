@@ -60,6 +60,9 @@ class GameScene extends Phaser.Scene {
     backPlanet.setOrigin(0, 0.5);
 
     this.player = new Player(this, CFG.PLAYER_X, CFG.PLAYER_Y);
+    // al iniciar una nueva partida se resetean las armas compradas/equipadas
+    this.game.ownedWeapons = [];
+    this.game.equippedWeapon = null;
     this.controls = new InputHandler(this, this.player);
 
     this.bullets = this.physics.add.group();
@@ -70,6 +73,7 @@ class GameScene extends Phaser.Scene {
 
     this.spawner = new EnemySpawner(this);
     this.startTime = this.time.now;
+    this.gameplayTime = 0;
     this.scoreSystem = new ScoreSystem();
     this.powerUpSystem = new PowerUpSystem(this);
     this.bigBoyUntil = 0;
@@ -97,6 +101,15 @@ class GameScene extends Phaser.Scene {
     });
     this.input.keyboard.on('keydown-N', (event) => {
       if (event.altKey) this.spawner.spawnVariantEnemy();
+    });
+    this.input.keyboard.on('keydown-Z', (event) => {
+      if (event.shiftKey) this.triggerVictory();
+    });
+    this.input.keyboard.on('keydown-X', (event) => {
+      if (event.shiftKey) {
+        this.scoreSystem.add(10000);
+        this.events.emit('enemy-killed', 10000);
+      }
     });
     this.input.keyboard.on('keydown-B', (event) => {
       if (event.ctrlKey) this.powerUpSystem.spawnRandom();
@@ -300,6 +313,15 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // atajo Ctrl+Z: fuerza la pantalla de victoria y después la tienda
+  triggerVictory() {
+    // se detiene la música del BOSS con fundido (la del juego se reanudará al salir de la tienda)
+    this.fadeMusic(this.game.bossMusic, 0, 500, () => {
+      if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
+    });
+    this.showVictory();
+  }
+
   // muestra "VICTORY" mientras suena victoria.mp3 y luego abre el menú de la tienda
   showVictory() {
     if (this.shopOpened) return;
@@ -426,8 +448,10 @@ class GameScene extends Phaser.Scene {
     this.difficulty = Math.min(2.5, this.difficulty + 0.25);
     if (this.spawner) this.spawner.resetWave();
     this.startTime = this.time.now;
+    this.gameplayTime = 0;
     this.bossSpawnedThisWave = false;
     this.inTransition = false;
+    this.shopOpened = false;
     this.events.emit('wave-started', this.wave);
   }
 
@@ -560,15 +584,34 @@ class GameScene extends Phaser.Scene {
 
     const sizeFactor = this.time.now < this.bigBoyUntil ? CFG.BIG_BOY_SIZE_MULT : 1;
     const weapon = this.getWeapon();
-    const bullet = new Bullet(this, tipX, tipY, p.getGunRadians(), sizeFactor, weapon);
+
+    // SHOTGUN y armas con dispersión: disparan varias balas a la vez en abanico
+    if (weapon.spread && weapon.pellets > 1) {
+      const baseAngle = p.getGunRadians();
+      const half = Math.floor((weapon.pellets - 1) / 2);
+      for (let i = 0; i < weapon.pellets; i++) {
+        const offsetDeg = (i - half) * weapon.spreadAngle;
+        this.fireBullet(tipX, tipY, baseAngle + Phaser.Math.DegToRad(offsetDeg), sizeFactor, weapon);
+      }
+    } else {
+      this.fireBullet(tipX, tipY, p.getGunRadians(), sizeFactor, weapon);
+    }
+
+    if (this.game.sfx) this.game.sfx.shot();
+  }
+
+  fireBullet(x, y, angle, sizeFactor, weapon) {
+    const bullet = new Bullet(this, x, y, angle, sizeFactor, weapon);
     this.bullets.add(bullet.sprite);
     bullet.sprite.setData('life', 0);
     bullet.sprite.setData('handler', bullet);
-    if (this.game.sfx) this.game.sfx.shot();
   }
 
   update(time, delta) {
     if (this.gameOver) return;
+
+    // tiempo de juego acumulado (ms), arranca en 0 al empezar la partida
+    this.gameplayTime += delta;
 
     // temporizador del TIME STOP: actualiza la cuenta atrás y lo termina al agotarse
     if (this.timestopActive) {
@@ -606,11 +649,9 @@ class GameScene extends Phaser.Scene {
     // mover estrellas de power up que caen
     if (this.powerUpSystem) this.powerUpSystem.update(delta);
 
-    const elapsed = this.time.now - this.startTime;
-
     // spawn y movimiento de enemigos / boss (congelados durante el TIME STOP)
     if (this.spawner && !this.timestopActive) {
-      this.spawner.update(time, elapsed);
+      this.spawner.update(time, this.gameplayTime);
       this.spawner.updateAll(delta, time);
     }
 

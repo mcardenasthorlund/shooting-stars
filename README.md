@@ -47,7 +47,7 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
   - 💙 **SHIELD** — escudo azul que absorbe el daño antes que tu vida.
   - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás.
   - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla.
-- **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA** y comprar nuevas armas con tus puntos (BLASTER, REVOLVER, UZI).
+- **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
 - **Sonido:** música de fondo en la partida, música propia al aparecer el BOSS, y efectos de sonido de disparo, explosión y daño.
@@ -65,6 +65,12 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 - [💙 **SHIELD**](assets/Shield.png) — escudo que absorbe el daño.
 - [⏸ **TIMESTOP**](assets/Time_Stop.png) — congela a los enemigos.
 - [💣 **GRANADE**](assets/Granade.png) — dispara granadas parabólicas.
+
+### Armas
+- [🚀 **BLASTER**](assets/logo.png) — el arma inicial, siempre disponible (usa la nave del jugador).
+- [🔫 **REVOLVER**](assets/Revolver.png) — daño 3, cadencia 0.5s, 60 pts.
+- [🔫 **SHOTGUN**](assets/Shotgun.png) — 3 balas en abanico (±10°), daño 2, cadencia 0.8s, 200 pts.
+- [🔫 **UZI**](assets/Uzi.png) — ráfaga rápida de bajo daño, 500 pts.
 
 ### Fondo
 - [🪐 **Planeta protector**](assets/Back_Planet.png) — planeta de fondo pegado al borde izquierdo que protege al jugador.
@@ -148,7 +154,9 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **49 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **58 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+
+Entre las últimas mejoras: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada** (caja de información con sprite del arma, imágenes de la tienda que cambian y animación al comprar), la **victoria para todos los BOSS** (mensaje + música + tienda en cada fase), y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
 ---
 
