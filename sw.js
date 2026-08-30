@@ -4,7 +4,7 @@
 // Al publicar una nueva versión, sube el número de VERSION para que el
 // navegador detecte un SW nuevo y aparezca el aviso "NUEVA VERSIÓN DESCARGADA".
 
-const VERSION = '0.5.0';
+const VERSION = '0.5.1';
 const RUNTIME = 'shooting-stars-' + VERSION + '-runtime';
 
 // Rutas del shell de la app, usadas como respaldo de navegación
@@ -26,7 +26,9 @@ self.addEventListener('install', (event) => {
     ];
     await Promise.all(urls.map(async (u) => {
       try {
-        const res = await fetch(u);
+        // cache: 'no-store' ignora la caché HTTP (heurística) del navegador,
+        // garantizando que el calentamiento guarde la versión más reciente
+        const res = await fetch(u, { cache: 'no-store' });
         if (res && res.ok) await cache.put(u, res);
       } catch (e) { /* sin red en el primer arranque: se ignora */ }
     }));
@@ -87,7 +89,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     try {
-      const res = await fetch(req);
+      // cache: 'no-store' es CLAVE: un fetch() en un SW respeta la caché HTTP
+      // del navegador (incluida la heurística sin Cache-Control). Sin esto,
+      // tras publicar una versión el navegador podía servir los JS antiguos
+      // desde su caché HTTP y "vencer" a la estrategia network-first.
+      const res = await fetch(req, { cache: 'no-store' });
       if (res && (res.ok || res.type === 'opaque')) {
         try { await cache.put(req, res.clone()); } catch (e) { /* el cache put nunca debe romper la respuesta */ }
       }
