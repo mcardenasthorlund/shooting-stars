@@ -281,6 +281,7 @@ class BootScene extends Phaser.Scene {
       gs.gameplayTime = 0;
       gs.inTransition = false;
       gs.gameOver = false;
+      gs.victoryPending = false;
       if (gs.spawner) gs.spawner.resetWave();
     }
     this.scene.start('GameScene');

@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual:** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.5.2-beta):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -46,7 +46,7 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
   - 🧡 **BIG BOOM** — explosión de pantalla completa que daña a todos los enemigos.
   - 💙 **SHIELD** — escudo azul que absorbe el daño antes que tu vida.
   - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás.
-  - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla.
+  - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla. Las granadas también **recogen los power ups** que tocan, tanto al impactar como con su explosión.
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
@@ -154,9 +154,11 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **58 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **62 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada** (caja de información con sprite del arma, imágenes de la tienda que cambian y animación al comprar), la **victoria para todos los BOSS** (mensaje + música + tienda en cada fase), y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
+
+En la última versión (v0.5.2-beta) se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
 
 ---
 

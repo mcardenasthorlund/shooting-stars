@@ -404,6 +404,25 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 ### 58. Fix: error al arrancar por `loadOwned` ✅
 - Bug: `ShopScene.loadOwned()` accedía a `this.game` desde el **constructor** (cuando aún no está asignado) → `Uncaught TypeError: Cannot read properties of undefined (reading 'ownedWeapons')`. Se movió la llamada a `create()`, donde `this.game` ya existe.
 
+## Sesión actual (fixes de victoria/fases + granadas y power ups)
+
+### 59. Sin enemigos durante la victoria del BOSS ✅
+- Bug: tras matar al BOSS, entre la gran explosión, el mensaje "VICTORY" y la apertura de la tienda (~2-3s), `GameScene.update()` seguía llamando a `spawner.update()`, que seguía creando enemigos durante la pantalla de victoria.
+- Fix: nuevo flag `this.victoryPending` que se activa en `onBossKilled()` (y en el atajo `triggerVictory()`) y bloquea `spawner.update()`/`updateAll()` hasta que empiece la siguiente fase. Se resetea en `beginNextWave()` y como respaldo en `BootScene.start()`.
+
+### 60. Enemigos que no aparecían al empezar una fase nueva ✅
+- Bug: al iniciar una fase nueva solo aparecía el BOSS de los 60s y ningún enemigo. `resetWave()` no reseteaba `nextSpawnTime`, que quedaba con un valor alto de la fase anterior; al reiniciar `gameplayTime` a 0, `elapsed` no volvía a superarlo hasta los ~60s (justo cuando llegaba el BOSS).
+- Fix: `EnemySpawner.resetWave()` ahora pone `nextSpawnTime = 0`, así el primer enemigo de la fase aparece de inmediato y el resto sigue su intervalo normal.
+
+### 61. Granadas recogen power ups ✅
+- La granada del power up **GRANADE** ya no atraviesa las estrellas de power up: ahora las recoge tanto al **chocar directamente** como con la **explosión**:
+  - Nuevo overlap `grenadeGroup ↔ powerUpSystem.group` → `onGrenadePowerUp()`: recoge el power up en el inventario y la granada explota.
+  - `explodeGrenade()` recoge además todos los power ups que queden dentro del radio de explosión (`GRANADE_EXPLOSION_RADIUS`), destruyéndolos.
+  - Ambos usan `powerUpSystem.collect()`, que ya emite `inventory-changed` para actualizar el HUD.
+
+### 62. Versión 0.5.2-beta ✅
+- `CFG.VERSION` → `0.5.2-beta` (config.js) y `VERSION` en `sw.js` → `0.5.2` (bumpear para que el service worker detecte la actualización y muestre el aviso).
+
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.
 - Prueba en navegador pendiente: abrir desde un **servidor HTTP local** (la PWA/el service worker requieren http/https, no `file://`). Probar: escalado móvil (landscape), apuntado/disparo por toque, power ups por toque, botón fullscreen, instalación como PWA, actualización (bumpear `VERSION` en `sw.js` → banner → ACTUALIZAR) y modo offline.

@@ -85,6 +85,7 @@ class GameScene extends Phaser.Scene {
     this.tunnelZ = 0;
     this.bossSpawnedThisWave = false;
     this.shopOpened = false;
+    this.victoryPending = false;
     this.timestopActive = false;
     this.timestopUntil = 0;
     this.timestopOverlay = null;
@@ -123,6 +124,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.bullets, this.spawner.enemies, this.onBulletEnemy, null, this);
     this.physics.add.overlap(this.grenadeGroup, this.spawner.enemies, this.onGrenadeEnemy, null, this);
     this.physics.add.overlap(this.bullets, this.powerUpSystem.group, this.onBulletPowerUp, null, this);
+    this.physics.add.overlap(this.grenadeGroup, this.powerUpSystem.group, this.onGrenadePowerUp, null, this);
   }
 
   onBulletEnemy(bullet, enemySprite) {
@@ -163,6 +165,16 @@ class GameScene extends Phaser.Scene {
     this.explodeGrenade(grenadeSprite);
   }
 
+  // la granada choca con un power up: se recoge y la granada explota
+  onGrenadePowerUp(grenadeSprite, powerUpSprite) {
+    const handler = powerUpSprite.getData('handler');
+    if (handler) {
+      this.powerUpSystem.collect(handler.type);
+      powerUpSprite.destroy();
+    }
+    this.explodeGrenade(grenadeSprite);
+  }
+
   // explosión de la granada: 1/8 de pantalla + 5 de daño a los enemigos cercanos
   explodeGrenade(grenadeSprite) {
     if (!grenadeSprite || !grenadeSprite.active) return;
@@ -179,6 +191,22 @@ class GameScene extends Phaser.Scene {
         if (dist <= CFG.GRANADE_EXPLOSION_RADIUS) {
           const h = s.getData('handler');
           if (h) this.handleHit(h, s, CFG.GRANADE_EXPLOSION_DAMAGE);
+        }
+      }
+    }
+
+    // la explosión también recoge los power ups que estén dentro del radio
+    if (this.powerUpSystem) {
+      const stars = this.powerUpSystem.group.getChildren().slice();
+      for (const s of stars) {
+        if (!s.active) continue;
+        const dist = Phaser.Math.Distance.Between(cx, cy, s.x, s.y);
+        if (dist <= CFG.GRANADE_EXPLOSION_RADIUS) {
+          const h = s.getData('handler');
+          if (h) {
+            this.powerUpSystem.collect(h.type);
+            s.destroy();
+          }
         }
       }
     }
@@ -269,6 +297,9 @@ class GameScene extends Phaser.Scene {
   }
 
   onBossKilled(boss, bossSprite) {
+    // a partir de aquí no deben aparecer más enemigos hasta la siguiente fase
+    this.victoryPending = true;
+
     // puntos del BOSS
     this.scoreSystem.add(boss.points);
     this.events.emit('enemy-killed', boss.points);
@@ -315,6 +346,8 @@ class GameScene extends Phaser.Scene {
 
   // atajo Ctrl+Z: fuerza la pantalla de victoria y después la tienda
   triggerVictory() {
+    // detener los spawns: la victoria se está mostrando
+    this.victoryPending = true;
     // se detiene la música del BOSS con fundido (la del juego se reanudará al salir de la tienda)
     this.fadeMusic(this.game.bossMusic, 0, 500, () => {
       if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
@@ -452,6 +485,7 @@ class GameScene extends Phaser.Scene {
     this.bossSpawnedThisWave = false;
     this.inTransition = false;
     this.shopOpened = false;
+    this.victoryPending = false;
     this.events.emit('wave-started', this.wave);
   }
 
@@ -649,8 +683,9 @@ class GameScene extends Phaser.Scene {
     // mover estrellas de power up que caen
     if (this.powerUpSystem) this.powerUpSystem.update(delta);
 
-    // spawn y movimiento de enemigos / boss (congelados durante el TIME STOP)
-    if (this.spawner && !this.timestopActive) {
+    // spawn y movimiento de enemigos / boss (congelados durante el TIME STOP
+    // y durante la pantalla de victoria, donde no deben aparecer más enemigos)
+    if (this.spawner && !this.timestopActive && !this.victoryPending) {
       this.spawner.update(time, this.gameplayTime);
       this.spawner.updateAll(delta, time);
     }

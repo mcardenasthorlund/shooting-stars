@@ -88,6 +88,10 @@ class EnemySpawner {
   }
 
   resetWave() {
+    // al empezar una fase nueva el reloj (gameplayTime) vuelve a 0, así que el
+    // siguiente spawn debe poder dispararse de inmediato (si no, el primer
+    // enemigo no aparecería hasta los ~60s, justo cuando llega el BOSS)
+    this.nextSpawnTime = 0;
     this.bossSpawned = false;
     this.bossActive = false;
     this.boss = null;
