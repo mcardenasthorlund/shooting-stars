@@ -37,8 +37,9 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
 - **Enemigos:** se mueven verticalmente y se acercan lentamente hacia ti. Algunos **rebotan** en los límites y otros **oscilan**.
   - **Enemigo básico:** 1 punto.
   - **Enemigo variante naranja** (más resistente): 3 puntos.
-  - **BOSS:** 10 puntos, aparece a los 60 segundos (o en cada fase).
-- **Daño:** si un enemigo cruza tu línea defensiva, pierdes **−10 % de vida**.
+  - **Enemigo ENEMY3** (a partir de la fase 2): tiene 2 vidas y dispara **meteoritos aimbot** que vuelan en línea recta hacia ti cada 4 segundos. Cada meteorito tiene 1 de vida.
+  - **BOSS:** 10 puntos, aparece a los 60 segundos (o en cada fase). Si llega a tu línea defensiva, **te mata al instante**.
+- **Daño:** si un enemigo cruza tu línea defensiva, pierdes **−10 % de vida**. Si es el **BOSS**, mueres directamente.
 - **Vida:** empiezas con **100**. La partida acaba cuando llegas a **0**.
 - **Power ups** (coge las estrellas que caen con tus balas y guárdalas en el inventario de 3 casillas):
   - 💛 **BIG BOY** — tus balas se hacen 3× más grandes durante 20s.
@@ -48,6 +49,7 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
   - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás.
   - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla. Las granadas también **recogen los power ups** que tocan, tanto al impactar como con su explosión.
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
+- **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
 - **Sonido:** música de fondo en la partida, música propia al aparecer el BOSS, y efectos de sonido de disparo, explosión y daño.
@@ -68,7 +70,7 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 
 ### Armas
 - [🚀 **BLASTER**](assets/logo.png) — el arma inicial, siempre disponible (usa la nave del jugador).
-- [🔫 **REVOLVER**](assets/Revolver.png) — daño 3, cadencia 0.5s, 60 pts.
+- [🔫 **REVOLVER**](assets/Revolver.png) — daño 3, cadencia 0.3s, 6 balas con recarga de 1.5s, 60 pts.
 - [🔫 **SHOTGUN**](assets/Shotgun.png) — 3 balas en abanico (±10°), daño 2, cadencia 0.8s, 200 pts.
 - [🔫 **UZI**](assets/Uzi.png) — ráfaga rápida de bajo daño, 500 pts.
 
@@ -81,6 +83,7 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 - [👾 **BOSS 3**](assets/boss3.png) — variante del jefe.
 - [✨ **Enemigo básico**](assets/estrella.png) — la estrella que gira y se acerca.
 - [🌠 **Enemigo variante**](assets/estrella2.png) — la estrella naranja, más resistente.
+- [💥 **ENEMY3**](assets/enemigo3.png) — enemigo de fase 2+ que dispara meteoritos aimbot. Su proyectil es [☄️ `enemigo3-disparo.png`](assets/enemigo3-disparo.png).
 
 ---
 
@@ -122,6 +125,7 @@ SHOOTING STARS/
     │   ├── Player.js        # player fijo + arma giratoria
     │   ├── Bullet.js
     │   ├── Enemy.js         # enemigo + variantes
+    │   ├── Enemy3.js        # enemigo de fase 2+ que dispara meteoritos aimbot
     │   ├── Boss.js          # jefe (10 pts, 60s)
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
     │   ├── Star.js          # estrellas fugaces del fondo
@@ -154,11 +158,11 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **62 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **65 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
-Entre las últimas mejoras: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada** (caja de información con sprite del arma, imágenes de la tienda que cambian y animación al comprar), la **victoria para todos los BOSS** (mensaje + música + tienda en cada fase), y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
+Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
-En la última versión (v0.5.2-beta) se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
+En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
 
 ---
 

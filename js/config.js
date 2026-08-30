@@ -38,6 +38,19 @@ const CFG = Object.freeze({
   VARIANT_LIFE_MULT: 3,
   VARIANT_SPEED_MULT: 1.15,
 
+  // ---- ENEMIGO 3 (desde fase 2) ----
+  ENEMY3_IMG: 'assets/enemigo3.png',          // textura del enemigo3
+  ENEMY3_SHOT_IMG: 'assets/enemigo3-disparo.png', // meteorito que dispara
+  ENEMY3_SIZE: 60,
+  ENEMY3_LIFE: 2,
+  ENEMY3_SPEED: 40,                           // px/s hacia el player
+  ENEMY3_SHOOT_INTERVAL: 4000,                // dispara cada 4s
+  ENEMY3_START_WAVE: 2,                       // aparece desde la fase 2
+  POINTS_PER_ENEMY3: 1,
+  METEOR_SIZE: 36,
+  METEOR_SPEED: 280,                          // px/s del meteorito
+  METEOR_LIFE: 1,                             // 1 de vida
+
   // ---- BOSS ----
   BOSS_TIME: 60000,             // ms tras el cual aparece el BOSS
   BOSS_LIFE: 25,                // disparos que aguanta
@@ -111,11 +124,13 @@ const CFG = Object.freeze({
     REVOLVER: {
       label: 'REVOLVER',
       damage: 3,
-      cooldown: 500,
+      cooldown: 300,
       cost: 60,
       desc: 'Golpea duro pero es lenta',
       bulletColor: 0xff8b39,
       bulletSize: 7,
+      magSize: 6,          // cargador de 6 balas
+      reloadTime: 1500,    // 1.5s de recarga al agotar el cargador
       img: 'weapon_revolver_img',
     },
 UZI: {

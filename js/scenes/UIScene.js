@@ -65,6 +65,16 @@ class UIScene extends Phaser.Scene {
     }).setOrigin(0, 0.5);
     this.grenadeText.setVisible(false);
 
+    // contador de balas del cargador (REVOLVER) junto al inventario
+    this.ammoText = this.add.text(70 + CFG.INVENTORY_SIZE * 58 + 20, H - 95, '', {
+      fontFamily: 'monospace',
+      fontSize: '18px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+      align: 'left',
+    }).setOrigin(0, 0.5);
+    this.ammoText.setVisible(false);
+
     // ---- Contador de puntos (abajo a la derecha) ----
     this.scoreText = this.add.text(W - 20, H - 40, 'PUNTOS: 0', {
       fontFamily: 'monospace',
@@ -110,6 +120,7 @@ class UIScene extends Phaser.Scene {
       gameScene.events.on('boss-spawned', this.showBossBar, this);
       gameScene.events.on('wave-started', this.setWave, this);
       gameScene.events.on('inventory-changed', this.setInventory, this);
+      gameScene.events.on('ammo-changed', this.setAmmo, this);
     }
     this.setInventory([]);
 
@@ -168,6 +179,21 @@ class UIScene extends Phaser.Scene {
   onEnemyKilled(points) {
     const game = this.scene.get('GameScene');
     if (game) this.scoreText.setText('PUNTOS: ' + game.scoreSystem.score);
+  }
+
+  setAmmo(data) {
+    if (!data || data.max <= 0) {
+      this.ammoText.setVisible(false);
+      return;
+    }
+    if (data.reloading) {
+      this.ammoText.setText('RECARGANDO...');
+      this.ammoText.setColor('#ff5a5a');
+    } else {
+      this.ammoText.setText('BALAS: ' + data.current + '/' + data.max);
+      this.ammoText.setColor('#ffd93b');
+    }
+    this.ammoText.setVisible(true);
   }
 
   setWave(wave) {

@@ -47,6 +47,13 @@ class EnemySpawner {
       const p = Phaser.Math.Clamp((elapsed - CFG.VARIANT_START_TIME) / CFG.SPAWN_RAMP_TIME, 0, 0.35);
       variant = Math.random() < p;
     }
+    // enemigo3 desde la fase 2 (no como variante forzada, para no mezclarlo con Alt+N)
+    if (!variant && this.scene.wave >= CFG.ENEMY3_START_WAVE && Math.random() < 0.25) {
+      const enemy = new Enemy3(this.scene, CFG.WIDTH + 30, y);
+      this.enemies.add(enemy.sprite);
+      enemy.sprite.setData('handler', enemy);
+      return;
+    }
     const enemy = new Enemy(this.scene, CFG.WIDTH + 30, y, variant);
     this.enemies.add(enemy.sprite);
     enemy.sprite.setData('handler', enemy);
@@ -64,14 +71,25 @@ class EnemySpawner {
       if (h) h.update(dt, time / 1000);
       if (s.x < lineX && !s.getData('passedLine')) {
         s.setData('passedLine', true);
-        this.scene.player.damage((CFG.MAX_HEALTH * CFG.CONTACT_DAMAGE_PERCENT) / 100);
-        this.scene.events.emit('player-hurt', this.scene.player.health);
-        if (this.scene.game.sfx) this.scene.game.sfx.damage();
-        this.scene.spawnShieldExplosion(s.x, s.y);
-        this.scene.spawnShieldFlash();
-        s.destroy();
-        if (!this.scene.player.isAlive() && !this.scene.gameOver) {
-          this.scene.endGame();
+        if (h instanceof Boss) {
+          // el BOSS al llegar a la línea mata al jugador instantáneamente
+          this.scene.player.damage(CFG.MAX_HEALTH);
+          this.scene.events.emit('player-hurt', this.scene.player.health);
+          if (this.scene.game.sfx) this.scene.game.sfx.damage();
+          s.destroy();
+          if (!this.scene.gameOver) {
+            this.scene.endGame();
+          }
+        } else {
+          this.scene.player.damage((CFG.MAX_HEALTH * CFG.CONTACT_DAMAGE_PERCENT) / 100);
+          this.scene.events.emit('player-hurt', this.scene.player.health);
+          if (this.scene.game.sfx) this.scene.game.sfx.damage();
+          this.scene.spawnShieldExplosion(s.x, s.y);
+          this.scene.spawnShieldFlash();
+          s.destroy();
+          if (!this.scene.player.isAlive() && !this.scene.gameOver) {
+            this.scene.endGame();
+          }
         }
       }
     });

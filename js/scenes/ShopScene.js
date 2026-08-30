@@ -395,6 +395,7 @@ class ShopScene extends Phaser.Scene {
     if (!game) return;
     if (game.player.setWeapon) game.player.setWeapon(key);
     else game.player.weapon = key;
+    if (game.reloadWeapon) game.reloadWeapon();
     this.game.equippedWeapon = key;
     this.updateEquip();
   }

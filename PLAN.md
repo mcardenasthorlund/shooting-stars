@@ -64,6 +64,9 @@
 | 47 | Efectos de sonido procedurales (Web Audio): disparo, explosión, daño (`SoundFX`) | ✅ |
 | 48 | Power ups cada 30s (`POWER_UP_SPAWN_INTERVAL`) | ✅ |
 | 49 | Victoria BOSS: `victoria.mp3` + mensaje "VICTORY" y tienda al terminar el audio | ✅ |
+| 63 | BOSS mata al instante al cruzar la línea del jugador | ✅ |
+| 64 | Nuevo enemigo ENEMY3 (fase 2+): 2 vidas, dispara meteorito aimbot recto cada 4s (1 vida) | ✅ |
+| 65 | REVOLVER: cadencia 0.3s + cargador de 6 balas con recarga de 1.5s + contador | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -85,6 +88,7 @@ SHOOTING STARS/
     │   ├── Player.js        # player fijo + arma giratoria
     │   ├── Bullet.js
     │   ├── Enemy.js         # enemigo + variantes
+    │   ├── Enemy3.js        # enemigo de fase 2+ que dispara meteoritos aimbot
     │   ├── Boss.js          # jefe (10 pts, 60s)
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
     │   ├── Star.js          # estrellas fugaces del fondo
@@ -422,6 +426,30 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 
 ### 62. Versión 0.5.2-beta ✅
 - `CFG.VERSION` → `0.5.2-beta` (config.js) y `VERSION` en `sw.js` → `0.5.2` (bumpear para que el service worker detecte la actualización y muestre el aviso).
+
+## Sesión actual (nuevo enemigo3 + cargador del REVOLVER)
+
+### 63. BOSS mata al instante al cruzar la línea ✅
+- `EnemySpawner.updateAll()`: al cruzar el BOSS la línea del jugador (`sprite.x < CFG.PLAYER_X`), en vez de restar -10% aplica **daño total** (`player.damage(CFG.MAX_HEALTH)`) y acaba la partida de inmediato. El resto de enemigos conservan su -10%.
+
+### 64. Nuevo enemigo ENEMY3 (desde fase 2) ✅
+- **Nuevo `js/objects/Enemy3.js`** (registrado en `index.html`): clases `Enemy3` y `Meteorite`.
+  - **`Enemy3`**: usa `assets/enemigo3.png` (`ENEMY3_IMG`, 60px = 1.5x), tiene **2 de vida** (`ENEMY3_LIFE`), se acerca con leve oscilación y **dispara un meteorito cada 4s** (`ENEMY3_SHOOT_INTERVAL`).
+  - **`Meteorite`**: usa `assets/enemigo3-disparo.png` (`ENEMY3_SHOT_IMG`, 36px = 2x), tiene **1 de vida** (`METEOR_LIFE`), vuela en **trayectoria recta** hacia el jugador con **aimbot** (ángulo fijado al disparar) a una velocidad del **doble de la del enemigo** (`speedX * 2`).
+  - Bug resuelto: los meteoritos se quedaban parados porque `update()` solo rotaba y no re-aplicaba la velocidad (mismo patrón que balas/enemigos). Ahora `Meteorite.update()` re-aplica `setVelocity(vx, vy)` cada frame.
+- `config.js`: constantes `ENEMY3_*` y `METEOR_*` (tamaños, vidas, velocidad, intervalo, `ENEMY3_START_WAVE: 2`, `POINTS_PER_ENEMY3: 1`).
+- `BootScene.preload()` carga `enemy3_img` y `enemy3_shot_img`.
+- `EnemySpawner.spawnEnemy()`: 25% de probabilidad de spawnar un `Enemy3` cuando `wave >= ENEMY3_START_WAVE` (se excluye de las variantes forzadas de Alt+N). El meteorito se integra en el grupo de enemigos (overlap de balas, daño y cruce de línea).
+
+### 65. Arma REVOLVER: cadencia 0.3s + cargador de 6 balas con recarga ✅
+- `config.js`: `REVOLVER.cooldown` de 500 → **300 ms** (0.3s) y nuevos campos `magSize: 6` y `reloadTime: 1500` (recarga de 1.5s).
+- **`GameScene`** (sistema de cargador, solo para armas con `magSize`):
+  - `reloadWeapon()` inicializa `ammo`/`ammoMax` según el arma equipada y emite `ammo-changed`.
+  - `consumeAmmo()` resta 1 por disparo y, al llegar a 0, lanza `startReload()`.
+  - `startReload()` bloquea el disparo (`reloading`) durante `reloadTime` y al terminar repone `ammo = ammoMax` y emite el evento.
+  - El disparo se bloquea en `tryFire()` y en el procesamiento de la cola de `update()` mientras `reloading`.
+  - `ShopScene.equip()` llama a `reloadWeapon()` al cambiar de arma.
+- **`UIScene`**: contador `BALAS: N/6` (amarillo) junto al inventario, que durante la recarga muestra `RECARGANDO...` en rojo; se actualiza con el evento `ammo-changed`. Solo aparece con armas que tienen cargador.
 
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.

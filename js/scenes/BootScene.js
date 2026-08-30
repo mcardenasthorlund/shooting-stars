@@ -8,6 +8,8 @@ class BootScene extends Phaser.Scene {
     this.load.image('enemy_img', CFG.ENEMY_IMG);
     this.load.image('enemy_variant_img', CFG.VARIANT_IMG);
     this.load.image('enemy_low_img', CFG.LOW_IMG);
+    this.load.image('enemy3_img', CFG.ENEMY3_IMG);
+    this.load.image('enemy3_shot_img', CFG.ENEMY3_SHOT_IMG);
     this.load.image('boss_img', CFG.BOSS_IMG);
     this.load.image('boss_img2', CFG.BOSS_IMG2);
     this.load.image('boss_img3', CFG.BOSS_IMG3);

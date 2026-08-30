@@ -71,6 +71,9 @@ class GameScene extends Phaser.Scene {
     this.fireQueue = [];
     this.grenadeShotsLeft = 0;
 
+    // munición del cargador (solo armas con magSize) y recarga
+    this.reloadWeapon();
+
     this.spawner = new EnemySpawner(this);
     this.startTime = this.time.now;
     this.gameplayTime = 0;
@@ -588,7 +591,54 @@ class GameScene extends Phaser.Scene {
     if (ui) ui.showGameOver(this.scoreSystem.score);
   }
 
+  // inicializa el cargador del arma equipada (0 balas si el arma no tiene cargador)
+  reloadWeapon() {
+    const weapon = this.getWeapon();
+    this.ammo = weapon.magSize || 0;
+    this.ammoMax = weapon.magSize || 0;
+    this.reloading = false;
+    this.emitAmmo();
+  }
+
+  // devuelve si el arma actual usa cargador con recarga
+  usesMagazine() {
+    return !!this.getWeapon().magSize;
+  }
+
+  // consumir una bala del cargador; si llega a 0 inicia la recarga (1.5s)
+  consumeAmmo() {
+    if (!this.usesMagazine() || this.grenadeShotsLeft > 0) return;
+    this.ammo = Math.max(0, this.ammo - 1);
+    this.emitAmmo();
+    if (this.ammo <= 0) {
+      this.startReload();
+    }
+  }
+
+  // inicia la recarga: bloquea el disparo hasta que pase reloadTime
+  startReload() {
+    if (this.reloading) return;
+    this.reloading = true;
+    const weapon = this.getWeapon();
+    this.time.delayedCall(weapon.reloadTime || 1500, () => {
+      this.ammo = this.ammoMax;
+      this.reloading = false;
+      this.emitAmmo();
+    });
+  }
+
+  // notifica al HUD el contador de balas restantes
+  emitAmmo() {
+    this.events.emit('ammo-changed', {
+      current: this.ammo,
+      max: this.ammoMax,
+      reloading: this.reloading,
+    });
+  }
+
   tryFire() {
+    // durante la recarga no se puede disparar
+    if (this.reloading) return;
     // en modo GRANADE: un disparo por pulsación, ignorando las pulsaciones
     // realizadas durante el segundo de espera (no se ponen en cola)
     if (this.grenadeShotsLeft > 0) {
@@ -632,6 +682,7 @@ class GameScene extends Phaser.Scene {
     }
 
     if (this.game.sfx) this.game.sfx.shot();
+    this.consumeAmmo();
   }
 
   fireBullet(x, y, angle, sizeFactor, weapon) {
@@ -694,7 +745,7 @@ class GameScene extends Phaser.Scene {
     const now = this.time.now;
     const weapon = this.getWeapon();
     const fireCooldown = this.grenadeShotsLeft > 0 ? CFG.GRANADE_COOLDOWN : weapon.cooldown;
-    if (this.fireQueue.length > 0 && this.grenadeShotsLeft <= 0 && now - this.lastFireTime >= fireCooldown) {
+    if (this.fireQueue.length > 0 && this.grenadeShotsLeft <= 0 && !this.reloading && now - this.lastFireTime >= fireCooldown) {
       this.fireQueue.shift();
       this.doFire();
       this.lastFireTime = now;
