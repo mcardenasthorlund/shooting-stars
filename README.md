@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.5.2-beta):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.6-beta):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -163,6 +163,8 @@ En él se registran las **65 fases completadas**, desde el scaffold inicial hast
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
 En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
+
+La versión **v0.6-beta** es la versión actual del juego.
 
 ---
 
