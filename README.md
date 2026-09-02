@@ -177,6 +177,8 @@ En esta versión se ha añadido: un **botón CREDITOS** en el menú que abre una
 
 **MANUEL (12 años)** y su padre, con el diseño en **Procreate** y el desarrollo guiado por **DeepSeek** + **opencode**.
 
+![Logo Maniac](assets/Logo-Maniac.png)
+
 > **¡Que no te desintegren las estrellas!** 🌠
 
 ---
