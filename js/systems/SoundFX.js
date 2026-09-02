@@ -110,4 +110,29 @@ class SoundFX {
       nsrc.stop(ctx.currentTime + 0.12);
     }
   }
+
+  // tecleo: clic corto de ruido para la máquina de escribir
+  type(volume = 0.15) {
+    if (!this.ctx || !this.noiseBuffer) return;
+    this.resume();
+    const ctx = this.ctx;
+
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1800, ctx.currentTime);
+    filter.Q.value = 1.5;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
+    src.stop(ctx.currentTime + 0.04);
+  }
 }

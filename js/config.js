@@ -1,5 +1,5 @@
 const CFG = Object.freeze({
-  VERSION: '0.6-beta',
+  VERSION: '0.7-preview',
   WIDTH: 800,
   HEIGHT: 600,
 
@@ -75,6 +75,14 @@ const CFG = Object.freeze({
   BASE_SPAWN_INTERVAL: 1600,    // ms en t=0
   MIN_SPAWN_INTERVAL: 350,      // ms mínimo al pasar el tiempo
   SPAWN_RAMP_TIME: 90000,       // ms para pasar del base al mínimo
+
+  // ---- Dificultad ----
+  DIFFICULTIES: Object.freeze({
+    FACIL:   { label: 'FÁCIL',   mult: 0.75, color: 0x39ff6e },
+    MEDIO:   { label: 'MEDIO',   mult: 1.0,  color: 0xffd93b },
+    DIFICIL: { label: 'DIFÍCIL', mult: 1.4,  color: 0xff8b39 },
+    EXTREMO: { label: 'EXTREMO', mult: 1.8,  color: 0xff3b3b },
+  }),
 
   // ---- POWER UP ----
   POWER_UP_SPAWN_INTERVAL: 30000, // 30s entre apariciones de power ups

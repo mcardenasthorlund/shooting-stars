@@ -67,6 +67,12 @@
 | 63 | BOSS mata al instante al cruzar la línea del jugador | ✅ |
 | 64 | Nuevo enemigo ENEMY3 (fase 2+): 2 vidas, dispara meteorito aimbot recto cada 4s (1 vida) | ✅ |
 | 65 | REVOLVER: cadencia 0.3s + cargador de 6 balas con recarga de 1.5s + contador | ✅ |
+| 66 | Botón CREDITOS abajo-derecha del menú + ventana modal con `Logo-Maniac.png`, "HECHO POR MANUEL Y MANOLO" y botón SALIR | ✅ |
+| 67 | Intro narrativa de 4 imágenes con textos, máquina de escribir con sonido por letra (`SoundFX.type`) | ✅ |
+| 68 | Slide de la intro: cuadro verde `#007c0f` de fondo, entrada por la derecha y salida por la izquierda (slide completo, sin recortes) | ✅ |
+| 69 | Cursor de mira rojo durante la partida (CSS) + mira táctil en pantalla que sigue el dedo en móvil | ✅ |
+| 70 | Selección de dificultad (FÁCIL/MEDIO/DIFÍCIL/EXTREMO) al comenzar: ajusta número y velocidad de enemigos | ✅ |
+| — | Versión actualizada a **0.7-preview** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -450,6 +456,31 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
   - El disparo se bloquea en `tryFire()` y en el procesamiento de la cola de `update()` mientras `reloading`.
   - `ShopScene.equip()` llama a `reloadWeapon()` al cambiar de arma.
 - **`UIScene`**: contador `BALAS: N/6` (amarillo) junto al inventario, que durante la recarga muestra `RECARGANDO...` en rojo; se actualiza con el evento `ammo-changed`. Solo aparece con armas que tienen cargador.
+
+## Sesión actual (créditos, intro narrativa y mira)
+
+### 66. Botón CREDITOS y ventana modal ✅
+- `BootScene`: se elimina el texto "HECHO POR MANUEL Y MANOLO" abajo-derecha y se sustituye por un **botón CREDITOS** (`makeButton`, abajo-derecha con margen para no cortarse).
+- Al pulsarlo se abre una **ventana modal** (overlay + contenedor) con la imagen `assets/Logo-Maniac.png` (centrada, ajustada al ancho con margen y proporción conservada), el texto en dos líneas "HECHO POR MANUEL Y MANOLO" / "y una máquina llamada DeepSeek" y un **botón SALIR** abajo.
+- Se usa `event.stopPropagation()` en el botón CREDITOS, el overlay y SALIR para que el clic no dispare el inicio del juego; `close()` destruye ventana y overlay.
+
+### 67. Intro narrativa con máquina de escribir ✅
+- `BootScene.showIntro()` deja de escribir líneas de texto y muestra una **secuencia de 4 imágenes** (`Intro_P1/P2/P3/P4.png`) con sus textos asociados (historia de la exploración del planeta y la venganza).
+- El texto aparece **letra por letra** (máquina de escribir, 35 ms por letra) y suena un **clic por letra** (`SoundFX.type()`, ruido con filtro bandpass).
+- Botón **SIGUIENTE** (última: **COMENZAR**) y tecla ENTER avanzan de diapositiva; se bloquea durante la animación (`transitioning`).
+
+### 68. Slide de la intro ✅
+- Un **cuadro verde `#007c0f`** del mismo tamaño que la imagen queda de fondo durante el movimiento.
+- Las imágenes **entran deslizándose desde la derecha** y **salen por la izquierda**, con un **slide completo** (sin máscara ni recortes: la imagen entra entera desde fuera de pantalla y sale entera por el borde izquierdo).
+
+### 69. Cursor de mira ✅
+- **Escritorio**: durante la partida el cursor del canvas se convierte en una **mira de disparo roja** (imagen CSS generada por código, `GameScene.setAimCursor`); se restaura al salir (`endGame`) y en `BootScene.create()`.
+- **Móvil**: `GameScene.setupTouchAim()` muestra una **mira roja en pantalla** (`aim_cursor` generada por código) que sigue el dedo al apuntar y se oculta al soltar.
+
+### 70. Selección de dificultad ✅
+- Al pulsar COMENZAR al final de la intro se abre un menú con **FÁCIL / MEDIO / DIFÍCIL / EXTREMO** (`CFG.DIFFICULTIES`), cada uno con un multiplicador (`mult`: 0.75 / 1.0 / 1.4 / 1.8).
+- La elección se guarda en `this.game.selectedDifficulty` y `GameScene` arranca con `this.difficulty = selectedDifficulty` (antes fijo a 1).
+- El multiplicador afecta a **velocidad de los enemigos** (`Enemy.js`/`Enemy3.js` multiplican `speedX`) y al **número de enemigos** (`EnemySpawner.currentInterval` divide el intervalo de aparición: a más dificultad, más enemigos). La progresión por fases (+0.25 por ola) sigue aplicándose sobre ese valor base.
 
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.

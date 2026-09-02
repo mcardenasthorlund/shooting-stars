@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.6-beta):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.7-preview):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -51,6 +51,7 @@ El juego está pensado para jugarse **en horizontal** (si el móvil está en ver
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
 - **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta.
+- **Dificultad:** al comenzar cada partida eliges el nivel (**FÁCIL**, **MEDIO**, **DIFÍCIL** o **EXTREMO**). A más dificultad, los enemigos son **más rápidos** y **aparecen más** (además de la progresión por fases).
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
 - **Sonido:** música de fondo en la partida, música propia al aparecer el BOSS, y efectos de sonido de disparo, explosión y daño.
 
@@ -146,9 +147,11 @@ SHOOTING STARS/
 ## 🚀 Cómo jugar
 
 1. Entra en **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)** (o abre **`index.html`** en local para desarrollo).
-2. Pulsa **ENTER** (o haz clic / toca la pantalla) para pasar la intro animada.
-3. ¡Sobrevive a las oleadas, derrota al BOSS y consigue el récord más alto!
-4. En el móvil, usa el botón **⛶** para jugar a pantalla completa (o instala la app como PWA, ver sección anterior).
+2. Pulsa **ENTER** (o haz clic / toca la pantalla) para ver la **intro narrativa**: 4 imágenes con la historia del juego, texto con efecto de máquina de escribir y sonido por letra. Usa **SIGUIENTE / COMENZAR** para avanzar.
+3. Elige la **dificultad** (FÁCIL, MEDIO, DIFÍCIL o EXTREMO) para empezar la partida.
+4. Durante la partida el cursor se convierte en una **mira de disparo** (roja en el ordenador; en el móvil aparece una mira en pantalla que sigue tu dedo).
+5. ¡Sobrevive a las oleadas, derrota al BOSS y consigue el récord más alto!
+6. En el móvil, usa el botón **⛶** para jugar a pantalla completa (o instala la app como PWA, ver sección anterior).
 
 > **Nota:** la primera carga requiere conexión a internet para descargar Phaser 3 desde el CDN. Una vez instalada como PWA, el juego queda disponible **sin conexión**.
 
@@ -158,13 +161,15 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **65 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **70 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
 En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
 
-La versión **v0.6-beta** es la versión actual del juego.
+La versión **v0.7-preview** es la versión actual del juego.
+
+En esta versión se ha añadido: un **botón CREDITOS** en el menú que abre una ventana con el logo, el texto "HECHO POR MANUEL Y MANOLO — y una máquina llamada DeepSeek" y un botón **SALIR**; una **intro narrativa** de 4 imágenes con texto a máquina de escribir (con sonido por letra) y **efecto slide** (entrada por la derecha y salida por la izquierda con un cuadro verde de fondo); y un **cursor de mira rojo** durante la partida, con una **mira en pantalla que sigue el dedo** en dispositivos móviles.
 
 ---
 

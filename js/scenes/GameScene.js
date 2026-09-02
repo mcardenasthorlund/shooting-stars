@@ -18,6 +18,9 @@ class GameScene extends Phaser.Scene {
     // efectos de sonido procedurales
     this.game.sfx = this.game.sfx || new SoundFX();
 
+    this.setAimCursor(true);
+    this.setupTouchAim();
+
     // mostrar el logo HTML solo durante el juego
     const logo = document.getElementById('logo');
     if (logo) logo.style.display = 'block';
@@ -82,7 +85,7 @@ class GameScene extends Phaser.Scene {
     this.bigBoyUntil = 0;
     this.explosions = [];
     this.wave = 1;
-    this.difficulty = 1;
+    this.difficulty = this.game.selectedDifficulty || 1;
     this.inTransition = false;
     this.tunnel = null;
     this.tunnelZ = 0;
@@ -584,11 +587,86 @@ class GameScene extends Phaser.Scene {
 
   endGame() {
     this.gameOver = true;
+    this.setAimCursor(false);
+    if (this.aimSprite) this.aimSprite.setVisible(false);
     if (this.game.music && this.game.music.isPlaying) this.game.music.stop();
     if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
     this.scene.pause();
     const ui = this.scene.get('UIScene');
     if (ui) ui.showGameOver(this.scoreSystem.score);
+  }
+
+  // cambia el cursor del canvas entre la mira de disparo y el por defecto
+  setAimCursor(active) {
+    const canvas = this.sys.canvas;
+    if (!canvas) return;
+    if (!active) {
+      canvas.style.cursor = 'default';
+      return;
+    }
+    if (this.aimCursor) {
+      canvas.style.cursor = this.aimCursor;
+      return;
+    }
+    const size = 32;
+    const c = document.createElement('canvas');
+    c.width = size;
+    c.height = size;
+    const g = c.getContext('2d');
+    const cx = size / 2;
+    g.strokeStyle = '#ff3b3b';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(cx, cx, 7, 0, Math.PI * 2);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(cx, cx - 13);
+    g.lineTo(cx, cx + 13);
+    g.moveTo(cx - 13, cx);
+    g.lineTo(cx + 13, cx);
+    g.stroke();
+    g.fillStyle = '#ffffff';
+    g.fillRect(cx - 1, cx - 1, 2, 2);
+    this.aimCursor = 'url("' + c.toDataURL() + '") ' + cx + ' ' + cx + ', crosshair';
+    canvas.style.cursor = this.aimCursor;
+  }
+
+  // mira visible en pantalla para pantallas táctiles (sigue el dedo al apuntar)
+  setupTouchAim() {
+    if (!this.textures.exists('aim_cursor')) {
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      const cx = 16;
+      g.lineStyle(3, 0xff3b3b, 1);
+      g.strokeCircle(cx, cx, 8);
+      g.beginPath();
+      g.moveTo(cx, cx - 15);
+      g.lineTo(cx, cx + 15);
+      g.moveTo(cx - 15, cx);
+      g.lineTo(cx + 15, cx);
+      g.strokePath();
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(cx, cx, 1.5);
+      g.generateTexture('aim_cursor', 32, 32);
+      g.destroy();
+    }
+
+    this.aimSprite = this.add.image(0, 0, 'aim_cursor');
+    this.aimSprite.setDepth(1000);
+    this.aimSprite.setVisible(false);
+
+    this.input.on('pointerdown', (pointer) => {
+      if (pointer.pointerType !== 'touch') return;
+      this.aimSprite.setVisible(true);
+      this.aimSprite.setPosition(pointer.x, pointer.y);
+    });
+    this.input.on('pointermove', (pointer) => {
+      if (pointer.pointerType !== 'touch' || !this.aimSprite.visible) return;
+      this.aimSprite.setPosition(pointer.x, pointer.y);
+    });
+    this.input.on('pointerup', (pointer) => {
+      if (pointer.pointerType !== 'touch') return;
+      this.aimSprite.setVisible(false);
+    });
   }
 
   // inicializa el cargador del arma equipada (0 balas si el arma no tiene cargador)
