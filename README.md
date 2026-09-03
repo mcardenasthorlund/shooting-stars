@@ -185,4 +185,12 @@ En esta versión se ha añadido: un **botón CREDITOS** en el menú que abre una
 
 ## 🖼️ Capturas
 
-![Captura de Shooting Stars](assets/captura.png)
+<p align="center">
+  <img src="assets/capturas/1.png" alt="Captura 1" width="48%">
+  <img src="assets/capturas/2.png" alt="Captura 2" width="48%">
+  <img src="assets/capturas/3.png" alt="Captura 3" width="48%">
+  <img src="assets/capturas/4.png" alt="Captura 4" width="48%">
+  <img src="assets/capturas/5.png" alt="Captura 5" width="48%">
+  <img src="assets/capturas/6.png" alt="Captura 6" width="48%">
+  <img src="assets/capturas/7.png" alt="Captura 7" width="48%">
+</p>
