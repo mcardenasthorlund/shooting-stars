@@ -20,6 +20,8 @@ Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizonta
 
 El juego está pensado para jugarse **en horizontal** (si el móvil está en vertical, te pedirá girar el dispositivo). Instalado como PWA funciona **offline** gracias a su service worker y **se actualiza solo**: cuando hay una versión nueva, la app avisa con **"NUEVA VERSIÓN DESCARGADA"**.
 
+En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** (solo cuando el navegador puede instalar el juego) para lanzar el instalador de la PWA sin entrar en los menús. Además, en el móvil el juego entra en **pantalla completa automáticamente al primer toque**, sin necesidad de pulsar ningún botón.
+
 ---
 
 ## 🎮 Qué es
@@ -151,7 +153,7 @@ SHOOTING STARS/
 3. Elige la **dificultad** (FÁCIL, MEDIO, DIFÍCIL o EXTREMO) para empezar la partida.
 4. Durante la partida el cursor se convierte en una **mira de disparo** (roja en el ordenador; en el móvil aparece una mira en pantalla que sigue tu dedo).
 5. ¡Sobrevive a las oleadas, derrota al BOSS y consigue el récord más alto!
-6. En el móvil, usa el botón **⛶** para jugar a pantalla completa (o instala la app como PWA, ver sección anterior).
+6. En el móvil, el juego pasa a **pantalla completa al primer toque** automáticamente (o usa el botón **⛶** para alternarla). Si no está instalado, arriba a la izquierda tienes el botón **⬇ INSTALAR APP** para instalarlo como PWA.
 
 > **Nota:** la primera carga requiere conexión a internet para descargar Phaser 3 desde el CDN. Una vez instalada como PWA, el juego queda disponible **sin conexión**.
 
@@ -161,7 +163,7 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **70 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **72 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE) y el sonido (música y efectos), así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
@@ -169,7 +171,7 @@ En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen m
 
 La versión **v0.7-preview** es la versión actual del juego.
 
-En esta versión se ha añadido: un **botón CREDITOS** en el menú que abre una ventana con el logo, el texto "HECHO POR MANUEL Y MANOLO — y una máquina llamada DeepSeek" y un botón **SALIR**; una **intro narrativa** de 4 imágenes con texto a máquina de escribir (con sonido por letra) y **efecto slide** (entrada por la derecha y salida por la izquierda con un cuadro verde de fondo); y un **cursor de mira rojo** durante la partida, con una **mira en pantalla que sigue el dedo** en dispositivos móviles.
+En esta versión se ha añadido: un **botón CREDITOS** en el menú que abre una ventana con el logo, el texto "HECHO POR MANUEL Y MANOLO — y una máquina llamada DeepSeek" y un botón **SALIR**; una **intro narrativa** de 4 imágenes con texto a máquina de escribir (con sonido por letra) y **efecto slide** (entrada por la derecha y salida por la izquierda con un cuadro verde de fondo); y un **cursor de mira rojo** durante la partida, con una **mira en pantalla que sigue el dedo** en dispositivos móviles. También se ha añadido el **botón "⬇ INSTALAR APP"** (arriba a la izquierda, visible solo cuando el navegador puede instalar el juego) para instalar la PWA sin entrar en menús, y el **fullscreen automático en el primer toque** en móviles (también en la app instalada), para jugar a pantalla completa sin pulsar ningún botón.
 
 ---
 

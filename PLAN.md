@@ -72,6 +72,8 @@
 | 68 | Slide de la intro: cuadro verde `#007c0f` de fondo, entrada por la derecha y salida por la izquierda (slide completo, sin recortes) | ✅ |
 | 69 | Cursor de mira rojo durante la partida (CSS) + mira táctil en pantalla que sigue el dedo en móvil | ✅ |
 | 70 | Selección de dificultad (FÁCIL/MEDIO/DIFÍCIL/EXTREMO) al comenzar: ajusta número y velocidad de enemigos | ✅ |
+| 71 | Botón **INSTALAR APP** arriba-izquierda (con icono de descarga) que lanza el instalador PWA cuando el navegador dispara `beforeinstallprompt` | ✅ |
+| 72 | Fullscreen automático en el primer toque (solo móviles táctiles, también en PWA standalone) sin botón | ✅ |
 | — | Versión actualizada a **0.7-preview** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
@@ -481,6 +483,21 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - Al pulsar COMENZAR al final de la intro se abre un menú con **FÁCIL / MEDIO / DIFÍCIL / EXTREMO** (`CFG.DIFFICULTIES`), cada uno con un multiplicador (`mult`: 0.75 / 1.0 / 1.4 / 1.8).
 - La elección se guarda en `this.game.selectedDifficulty` y `GameScene` arranca con `this.difficulty = selectedDifficulty` (antes fijo a 1).
 - El multiplicador afecta a **velocidad de los enemigos** (`Enemy.js`/`Enemy3.js` multiplican `speedX`) y al **número de enemigos** (`EnemySpawner.currentInterval` divide el intervalo de aparición: a más dificultad, más enemigos). La progresión por fases (+0.25 por ola) sigue aplicándose sobre ese valor base.
+
+## Sesión actual (botón de instalación PWA + fullscreen automático)
+
+### 71. Botón INSTALAR APP ✅
+- **`index.html`**: nuevo `<button id="install-btn">` arriba-izquierda (junto al de fullscreen) con el texto **"⬇ INSTALAR APP"** (icono de descarga + texto).
+- **`main.js`**:
+  - `positionHtmlOverlays()` coloca el botón arriba-izquierda siguiendo el canvas centrado (como el fullscreen).
+  - Captura `beforeinstallprompt` (guarda el prompt y muestra el botón solo si la app no está instalada); al pulsarlo llama a `prompt()` y oculta el botón si el usuario acepta.
+  - Se oculta también con el evento `appinstalled` o si el juego ya corre como app standalone (`display-mode: standalone` / `navigator.standalone`).
+- **`css/style.css`**: botón oculto por defecto (`display:none`), con padding horizontal para acomodar el texto; se muestra (`display:flex`) vía JS cuando es instalable.
+
+### 72. Fullscreen automático en el primer toque ✅
+- **`main.js`**: en dispositivos táctiles (`@media (hover:none) and (pointer:coarse)`), el **primer `pointerdown`** pide fullscreen automáticamente (`enterFullscreen()`), una sola vez, y se elimina el listener.
+- Se aplica también cuando la app corre como **PWA standalone**, para que ocupe toda la pantalla sin barra del sistema. En escritorio o con `pointer` fino se ignora.
+- Nota: los navegadores exigen un gesto del usuario para el fullscreen, por eso se aprovecha el primer toque; en **iOS Safari** no hay API `requestFullscreen` en el elemento raíz (solo `<video>`), así que ahí el fullscreen "limpio" sigue vía la PWA instalada.
 
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.

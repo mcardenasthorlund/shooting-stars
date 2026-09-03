@@ -39,6 +39,12 @@ function positionHtmlOverlays() {
     fsBtn.style.left = (ox + sm.displaySize.width - 46) + 'px';
     fsBtn.style.top = (oy + 8) + 'px';
   }
+
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) {
+    installBtn.style.left = (ox + 8) + 'px';
+    installBtn.style.top = (oy + 8) + 'px';
+  }
 }
 game.scale.on('resize', positionHtmlOverlays);
 game.events.once('ready', positionHtmlOverlays);
@@ -53,6 +59,28 @@ if (fsBtn) {
       document.documentElement.requestFullscreen();
     }
   });
+}
+
+// ---- Fullscreen automático en el primer toque (solo móviles táctiles) ----
+// El navegador exige un gesto del usuario para el fullscreen; se aprovecha el
+// primer toque para pedirlo. En escritorio o como app standalone se ignora.
+function isTouchDevice() {
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
+
+function enterFullscreen() {
+  if (document.fullscreenElement) return;
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+if (isTouchDevice()) {
+  const requestFs = () => {
+    enterFullscreen();
+    window.removeEventListener('pointerdown', requestFs);
+  };
+  window.addEventListener('pointerdown', requestFs, { passive: true });
 }
 
 // ---- PWA: registro del service worker + aviso de nueva versión ----
@@ -94,3 +122,44 @@ function showUpdateBanner() {
   const close = banner.querySelector('.update-close');
   if (close) close.onclick = () => banner.classList.remove('visible');
 }
+
+// ---- PWA: botón de instalación (solo si el navegador puede instalarla) ----
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('install-btn');
+
+function isStandalone() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true
+  );
+}
+
+function setInstallButtonVisible(visible) {
+  if (installBtn) installBtn.style.display = visible ? 'flex' : 'none';
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!isStandalone()) setInstallButtonVisible(true);
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice && choice.outcome === 'accepted') {
+      setInstallButtonVisible(false);
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  setInstallButtonVisible(false);
+  deferredInstallPrompt = null;
+});
+
+// Si el juego ya se abre como app instalada, no mostrar el botón
+if (isStandalone()) setInstallButtonVisible(false);
