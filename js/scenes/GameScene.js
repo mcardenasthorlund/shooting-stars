@@ -92,6 +92,8 @@ class GameScene extends Phaser.Scene {
     this.explosions = [];
     this.wave = 1;
     this.difficulty = this.game.selectedDifficulty || 1;
+    // dificultad base seleccionada (sin la progresión +0.25 por oleada), usada por el boss final
+    this.baseDifficulty = this.game.selectedDifficulty || 1;
     this.inTransition = false;
     this.tunnel = null;
     this.tunnelZ = 0;

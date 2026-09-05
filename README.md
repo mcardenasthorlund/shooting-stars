@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.8-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.8.1-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -174,6 +174,8 @@ En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen m
 La versión **v0.8-prerelease** es la versión actual del juego.
 
 En esta versión se ha añadido el **BOSS FINAL** de la **oleada 5**: aparece desde la derecha ocupando todo el alto, con **750 de vida** e **inmune a tus balas**; lanza **espadas fantasma** (azul-verdosas), **espadas rojas de 2 vidas**, una **espada normal** que al tocarla **vuelve contra el boss** (50 de daño) y un **ataque especial de 10 fantasmas** horizontales cada 20s. Las espadas salen en cualquier ángulo y Y, rebotan en las paredes y su ritmo y velocidad **aumentan con la dificultad**. Los **power ups** (BIG BOOM, GRANADE y TIMESTOP) ahora también afectan a las espadas. Al derrotarlo aparece **"VENGANZA CUMPLIDA"** con la opción **CONTINUAR** (dificultad superior manteniendo la puntuación) o **TERMINAR**. En dificultad **EXTREMA** el boss final no te confisca las armas. Además: el **nivel de dificultad** se muestra bajo el indicador de fase, la pantalla de Game Over y la de victoria **no se cierran con un click genérico** (botón VOLVER / CONTINUAR o ENTER), y se limita el número de **ENEMY3** en dificultad alta.
+
+La versión **v0.8.1-prerelease** corrige un bug de dificultad del **BOSS FINAL**: antes su ritmo y la velocidad de sus espadas escalaban con la dificultad **acumulada por oleadas** (+0.25 por fase), por lo que en niveles bajos (p. ej. FÁCIL) llegaba a la oleada 5 con una dificultad casi de EXTREMO. Ahora el boss final escala con la **dificultad base seleccionada** al empezar la partida, de forma acorde al nivel elegido.
 
 ---
 

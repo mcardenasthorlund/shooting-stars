@@ -34,8 +34,9 @@ class FinalBoss {
     this.slideDone = false;
     this.swayPhase = 0;
 
-    // temporizadores (a más dificultad, más espadas = intervalos menores)
-    this.diff = scene.difficulty || 1;
+    // temporizadores (a más dificultad, más espadas = intervalos menores).
+    // Se usa la dificultad BASE seleccionada (no la acumulada por oleadas)
+    this.diff = scene.baseDifficulty || scene.difficulty || 1;
     this.ghostInterval = CFG.FINAL_SWORD_INTERVAL / this.diff;
     this.redInterval = CFG.FINAL_SWORD_RED_INTERVAL / this.diff;
     this.normalInterval = CFG.FINAL_SWORD_INTERVAL_NORMAL / this.diff;
@@ -162,8 +163,8 @@ class FinalSword {
     this.angle = angle;
     this.returning = false;
     this.passedLine = false;
-    // velocidad variable entre 1x y 2x, escalada por la dificultad
-    const speed = CFG.FINAL_SWORD_SPEED * (this.scene.difficulty || 1) * Phaser.Math.FloatBetween(1, 2);
+    // velocidad variable entre 1x y 2x, escalada por la dificultad base seleccionada
+    const speed = CFG.FINAL_SWORD_SPEED * (this.scene.baseDifficulty || this.scene.difficulty || 1) * Phaser.Math.FloatBetween(1, 2);
     if (straight) {
       // ataque especial: recta horizontal hacia la izquierda
       this.vx = -speed;

@@ -81,6 +81,7 @@
 | 76 | Ajustes boss final: espadas 3x, ángulo hacia delante, más lentas y giro lento; siempre fantasmas (cada 0.75s), espada normal cada 10s y espada roja de 2 vidas cada 3s; velocidad 1x-2x y escalada por dificultad; boss a 200×600 con vaivén suave; música `boss-final.mp3`; May+V elimina al boss | ✅ |
 | 77 | Power ups interactúan con espadas (BIG BOOM, GRANADE, TIMESTOP); nivel de dificultad visible bajo la fase; en EXTREMO no se confiscan las armas ni el mensaje; límite de Enemy3 en dificultad alta | ✅ |
 | 78 | Pantalla de victoria final solo sale con ENTER o botón CONTINUAR; Game Over no se quita con click genérico (botón VOLVER); CONTINUAR mantiene la puntuación y arregla los spawns; versión **0.8-prerelease** | ✅ |
+| 79 | Fix dificultad del BOSS FINAL: usaba la dificultad acumulada por oleadas (+0.25/ola), inflándose en FÁCIL a ~1.75 (≈EXTREMO); ahora escala por la dificultad base seleccionada (`baseDifficulty`); versión **0.8.1-prerelease** | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -562,9 +563,17 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **CONTINUAR** (dificultad superior) mantiene la puntuación y corrige los spawns tras el reinicio (el multiplicador de dificultad se guarda como número, no como clave).
 - Versión actualizada a **0.8-prerelease** (`CFG.VERSION` y `sw.js`).
 
+## Sesión actual (fix dificultad del BOSS FINAL) v0.8.1-prerelease
+
+### 79. Fix: dificultad del BOSS FINAL inflada por la progresión de oleadas ✅
+- **Bug:** el `FinalBoss` y sus espadas usaban `scene.difficulty`, que acumula **+0.25 por oleada** (`beginNextWave()`). Al llegar a la oleada 5 por el camino normal la dificultad ya era **base + 1.0** (p. ej. FÁCIL 0.75 → 1.75 ≈ EXTREMO), haciendo el boss final desproporcionado en niveles bajos.
+- En cambio, acceder con el atajo **May+C** (`startFinalBoss()`) no pasaba por los incrementos y dejaba la dificultad base → "acorde con el seleccionado". Inconsistente con `isExtremeRun`, que ya usaba `selectedDifficulty` (la base).
+- **Fix:** nueva `baseDifficulty` en `GameScene.create()` (el multiplicador seleccionado, sin progresión). `FinalBoss` (temporizadores de espadas) y `FinalSword` (velocidad de espadas) usan ahora `scene.baseDifficulty`, de modo que el boss final escala según el nivel elegido (FÁCIL 0.75 … EXTREMO 1.8), no el acumulado.
+- Versión actualizada a **0.8.1-prerelease** (`CFG.VERSION` y `sw.js`).
+
 ## Verificación
-- `node --check` de todos los archivos JS modificados: OK (`config.js`, `FinalBoss.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`, `EnemySpawner.js`, `ScoreSystem.js`).
-- Prueba en navegador pendiente: oleada 5, espadas/rebotes, devolución de espadas al boss, ataque especial 20s, espada roja, CONTINUAR/TERMINAR, May+C/May+V, power ups sobre espadas y balanceo de dificultad.
+- `node --check` de los archivos modificados: OK (`config.js`, `GameScene.js`, `FinalBoss.js`).
+- Prueba en navegador pendiente: llegar a la oleada 5 en FÁCIL/MEDIO y comprobar que el ritmo/velocidad de las espadas corresponde al nivel elegido (no al acumulado), tanto por el camino normal como con May+C.
 
 ## Sesión actual (BOSS FINAL de la oleada 5)
 
