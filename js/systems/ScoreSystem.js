@@ -1,6 +1,6 @@
 class ScoreSystem {
-  constructor() {
-    this.score = 0;
+  constructor(initialScore = 0) {
+    this.score = initialScore;
     this.kills = 0;
   }
 

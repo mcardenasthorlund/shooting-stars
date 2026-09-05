@@ -18,6 +18,9 @@ class BootScene extends Phaser.Scene {
     this.load.image('boss_img', CFG.BOSS_IMG);
     this.load.image('boss_img2', CFG.BOSS_IMG2);
     this.load.image('boss_img3', CFG.BOSS_IMG3);
+    this.load.image('final_boss1_img', CFG.FINAL_BOSS_IMG1);
+    this.load.image('final_boss2_img', CFG.FINAL_BOSS_IMG2);
+    this.load.image('final_sword_img', CFG.FINAL_SWORD_IMG);
     this.load.image('powerup_bigboy_img', 'assets/Big_Boy.png');
     this.load.image('powerup_bigboom_img', 'assets/Big_Boom.png');
     this.load.image('powerup_heal_img', 'assets/Heal.png');
@@ -37,6 +40,7 @@ class BootScene extends Phaser.Scene {
     this.load.image('back_planet_img', 'assets/Back_Planet.png');
     this.load.audio('music', 'assets/audio/musica.mp3');
     this.load.audio('boss_music', 'assets/audio/musica-boss.mp3');
+    this.load.audio('boss_final_music', 'assets/audio/boss-final.mp3');
     this.load.audio('victory', 'assets/audio/victoria.mp3');
   }
 
@@ -184,9 +188,11 @@ class BootScene extends Phaser.Scene {
     this.game.sfx = this.game.sfx || new SoundFX();
 
     let typingEvent = null;
+    let textComplete = false;
 
     const showSlide = (i) => {
       if (typingEvent) typingEvent.remove();
+      textComplete = false;
       const slide = slides[i];
       const src = this.textures.get(slide.img).getSourceImage();
       const maxW = W - 40;
@@ -226,6 +232,7 @@ class BootScene extends Phaser.Scene {
           if (this.game.sfx) this.game.sfx.type();
           idx++;
           imgText.setText(text.slice(0, idx));
+          if (idx >= text.length) textComplete = true;
         },
         callbackScope: this,
       });
@@ -235,9 +242,13 @@ class BootScene extends Phaser.Scene {
 
     const advance = () => {
       if (transitioning) return;
-      if (typingEvent) {
+      if (typingEvent && !textComplete) {
+        // el texto aún se está escribiendo: se completa y NO se avanza de página
         typingEvent.remove();
         typingEvent = null;
+        imgText.setText(slides[current].text);
+        textComplete = true;
+        return;
       }
       if (current < slides.length - 1) {
         transitioning = true;

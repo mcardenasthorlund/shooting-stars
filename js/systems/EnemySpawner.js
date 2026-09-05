@@ -47,12 +47,17 @@ class EnemySpawner {
       const p = Phaser.Math.Clamp((elapsed - CFG.VARIANT_START_TIME) / CFG.SPAWN_RAMP_TIME, 0, 0.35);
       variant = Math.random() < p;
     }
-    // enemigo3 desde la fase 2 (no como variante forzada, para no mezclarlo con Alt+N)
-    if (!variant && this.scene.wave >= CFG.ENEMY3_START_WAVE && Math.random() < 0.25) {
-      const enemy = new Enemy3(this.scene, CFG.WIDTH + 30, y);
-      this.enemies.add(enemy.sprite);
-      enemy.sprite.setData('handler', enemy);
-      return;
+    // enemigo3 desde la fase 2 (no como variante forzada, para no mezclarlo con Alt+N).
+    // En dificultad alta hay más spawns (intervalo menor), así que la probabilidad
+    // se reduce con la dificultad y se limita el nº de enemy3 simultáneos en pantalla.
+    if (!variant && this.scene.wave >= CFG.ENEMY3_START_WAVE) {
+      const chance = Phaser.Math.Clamp(0.25 / (this.scene.difficulty || 1), 0, 0.25);
+      if (Math.random() < chance && this.countActiveEnemy3() < CFG.ENEMY3_MAX_ACTIVE) {
+        const enemy = new Enemy3(this.scene, CFG.WIDTH + 30, y);
+        this.enemies.add(enemy.sprite);
+        enemy.sprite.setData('handler', enemy);
+        return;
+      }
     }
     const enemy = new Enemy(this.scene, CFG.WIDTH + 30, y, variant);
     this.enemies.add(enemy.sprite);
@@ -61,6 +66,17 @@ class EnemySpawner {
 
   spawnVariantEnemy() {
     this.spawnEnemy(0, true);
+  }
+
+  // nº de enemigos Enemy3 activos en pantalla (para limitarlos en dificultad alta)
+  countActiveEnemy3() {
+    let n = 0;
+    this.enemies.children.iterate((s) => {
+      if (!s || !s.active) return;
+      const h = s.getData('handler');
+      if (h instanceof Enemy3) n++;
+    });
+    return n;
   }
 
   updateAll(dt, time) {

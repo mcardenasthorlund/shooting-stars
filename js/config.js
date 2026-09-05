@@ -1,5 +1,5 @@
 const CFG = Object.freeze({
-  VERSION: '0.7.1-preview',
+  VERSION: '0.8-prerelease',
   WIDTH: 800,
   HEIGHT: 600,
 
@@ -46,6 +46,7 @@ const CFG = Object.freeze({
   ENEMY3_SPEED: 40,                           // px/s hacia el player
   ENEMY3_SHOOT_INTERVAL: 4000,                // dispara cada 4s
   ENEMY3_START_WAVE: 2,                       // aparece desde la fase 2
+  ENEMY3_MAX_ACTIVE: 3,                       // tope de enemy3 simultáneos (reduce en dificultad alta)
   POINTS_PER_ENEMY3: 1,
   METEOR_SIZE: 36,
   METEOR_SPEED: 280,                          // px/s del meteorito
@@ -66,7 +67,34 @@ const CFG = Object.freeze({
   BOSS_EXPLOSION_RADIUS: 1100,  // radio de la explosión al matar el BOSS (cubre toda la pantalla)
   BOSS_EXPLOSION_DELAY: 550,    // ms de espera tras la explosión del BOSS antes de la victoria
 
+  // ---- BOSS FINAL (oleada 5) ----
+  TOTAL_WAVES: 5,               // el juego tiene 5 oleadas; la 5ª es el boss final
+  FINAL_BOSS_LIFE: 750,         // vida del boss final (solo le afectan las espadas devueltas)
+  FINAL_BOSS_WIDTH: 200,        // ancho (px) de la imagen del boss final (200x600, proporción)
+  FINAL_BOSS_HEIGHT: 600,       // alto (px): ocupa el alto completo de la pantalla
+  FINAL_BOSS_X: 700,            // centro X del boss final (pegado al borde derecho: W - width/2)
+  FINAL_BOSS_IMG1: 'assets/boss-final-1.png',  // textura normal del boss final
+  FINAL_BOSS_IMG2: 'assets/boss-final-2.png',  // textura al lanzar una espada
+  FINAL_BOSS_THROW_DURATION: 500,              // ms que muestra boss-final-2 al lanzar
+  FINAL_SWORD_IMG: 'assets/boss-final-espada.png', // textura de las espadas
+  FINAL_SWORD_SIZE: 108,        // tamaño (px) de la espada (3x)
+  FINAL_SWORD_INTERVAL: 350,    // ms entre espadas fantasma (ritmo más rápido)
+  FINAL_SWORD_RED_INTERVAL: 3000, // ms entre espadas rojas (2 de vida, cada 3s)
+  FINAL_SWORD_RED_LIFE: 2,      // vida de la espada roja (2 disparos)
+  RED_SWORD_COLOR: 0xff3b3b,    // tinte rojo de la espada de 2 vidas
+  FINAL_SWORD_INTERVAL_NORMAL: 10000, // ms entre espadas normales (una cada 10s, se vuelve contra el boss)
+  FINAL_SWORD_SPEED: 120,       // velocidad de la espada (px/s) - más lenta
+  FINAL_SWORD_ROT_SPEED: 2,     // rad/s de giro de la espada - más lenta
+  FINAL_SWORD_RETURN_SPEED: 950,// velocidad de la espada al volver al boss (px/s)
+  FINAL_SWORD_DAMAGE: 20,       // vida que quita la espada normal al cruzar la línea
+  FINAL_SWORD_BOSS_DAMAGE: 50,  // vida que quita la espada devuelta al impactar en el boss
+  GHOST_SWORD_DAMAGE: 10,       // vida que quita la espada fantasma al cruzar la línea
+  GHOST_COLOR: 0x2fe0b0,        // tinte azul-verdoso de las espadas fantasma
+  FINAL_SPECIAL_INTERVAL: 20000,// ms entre ataques especiales (10 fantasmas)
+  FINAL_SPECIAL_COUNT: 10,      // nº de espadas fantasma del ataque especial
+
   // ---- Puntos ----
+  POINTS_PER_FINAL_BOSS: 10,    // puntos al derrotar al boss final
   POINTS_PER_ENEMY: 1,
   POINTS_PER_VARIANT: 3,
   POINTS_PER_BOSS: 10,

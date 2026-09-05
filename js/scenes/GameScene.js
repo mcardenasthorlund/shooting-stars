@@ -14,6 +14,9 @@ class GameScene extends Phaser.Scene {
     // música del BOSS (se activa al aparecer el jefe)
     if (this.game.bossMusic) this.game.bossMusic.stop();
     this.game.bossMusic = this.sound.add('boss_music', { loop: true, volume: 0.5 });
+    // música del BOSS FINAL (oleada 5)
+    if (this.game.finalBossMusic) this.game.finalBossMusic.stop();
+    this.game.finalBossMusic = this.sound.add('boss_final_music', { loop: true, volume: 0.5 });
 
     // efectos de sonido procedurales
     this.game.sfx = this.game.sfx || new SoundFX();
@@ -70,6 +73,7 @@ class GameScene extends Phaser.Scene {
 
     this.bullets = this.physics.add.group();
     this.grenadeGroup = this.physics.add.group();
+    this.finalSwords = this.physics.add.group();
     this.lastFireTime = -CFG.FIRE_COOLDOWN;
     this.fireQueue = [];
     this.grenadeShotsLeft = 0;
@@ -80,7 +84,9 @@ class GameScene extends Phaser.Scene {
     this.spawner = new EnemySpawner(this);
     this.startTime = this.time.now;
     this.gameplayTime = 0;
-    this.scoreSystem = new ScoreSystem();
+    // conservar la puntuación si venimos de CONTINUAR tras el boss final
+    this.scoreSystem = new ScoreSystem(this.game.retainedScore || 0);
+    this.game.retainedScore = 0;
     this.powerUpSystem = new PowerUpSystem(this);
     this.bigBoyUntil = 0;
     this.explosions = [];
@@ -96,6 +102,9 @@ class GameScene extends Phaser.Scene {
     this.timestopUntil = 0;
     this.timestopOverlay = null;
     this.timestopText = null;
+    this.finalBoss = null;
+    this.finalBossActive = false;
+    this.finalVictoryShown = false;
 
     this.setupCollisions();
 
@@ -121,6 +130,12 @@ class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-B', (event) => {
       if (event.ctrlKey) this.powerUpSystem.spawnRandom();
     });
+    this.input.keyboard.on('keydown-C', (event) => {
+      if (event.shiftKey) this.startFinalBoss();
+    });
+    this.input.keyboard.on('keydown-V', (event) => {
+      if (event.shiftKey) this.forceFinalVictory();
+    });
     this.input.keyboard.on('keydown-ONE', () => this.activateSlot(0));
     this.input.keyboard.on('keydown-TWO', () => this.activateSlot(1));
     this.input.keyboard.on('keydown-THREE', () => this.activateSlot(2));
@@ -131,6 +146,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.grenadeGroup, this.spawner.enemies, this.onGrenadeEnemy, null, this);
     this.physics.add.overlap(this.bullets, this.powerUpSystem.group, this.onBulletPowerUp, null, this);
     this.physics.add.overlap(this.grenadeGroup, this.powerUpSystem.group, this.onGrenadePowerUp, null, this);
+    this.physics.add.overlap(this.bullets, this.finalSwords, this.onBulletFinalSword, null, this);
   }
 
   onBulletEnemy(bullet, enemySprite) {
@@ -201,6 +217,16 @@ class GameScene extends Phaser.Scene {
       }
     }
 
+    // la explosión también daña las espadas del boss final dentro del radio
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (!s.active) continue;
+      const dist = Phaser.Math.Distance.Between(cx, cy, s.x, s.y);
+      if (dist <= CFG.GRANADE_EXPLOSION_RADIUS) {
+        this.hitFinalSword(s, CFG.GRANADE_EXPLOSION_DAMAGE);
+      }
+    }
+
     // la explosión también recoge los power ups que estén dentro del radio
     if (this.powerUpSystem) {
       const stars = this.powerUpSystem.group.getChildren().slice();
@@ -240,6 +266,7 @@ class GameScene extends Phaser.Scene {
       case 'BIG_BOOM':
         this.spawnExplosion(this.player.sprite.x, this.player.sprite.y, CFG.BOSS_EXPLOSION_RADIUS);
         this.damageAllEnemies(CFG.BIG_BOOM_DAMAGE);
+        this.damageAllSwords(CFG.BIG_BOOM_DAMAGE);
         break;
       case 'SHIELD':
         this.player.setShield(CFG.RIOT_SHIELD_AMOUNT);
@@ -264,6 +291,14 @@ class GameScene extends Phaser.Scene {
     if (this.spawner) {
       const list = this.spawner.enemies.getChildren().slice();
       for (const s of list) {
+        if (s && s.active && s.body) s.body.setVelocity(0, 0);
+      }
+    }
+
+    // congelar también las espadas del boss final (la física las movería si no)
+    if (this.finalSwords) {
+      const swords = this.finalSwords.getChildren().slice();
+      for (const s of swords) {
         if (s && s.active && s.body) s.body.setVelocity(0, 0);
       }
     }
@@ -302,6 +337,240 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  // BIG BOOM daña también todas las espadas del boss final
+  damageAllSwords(amount) {
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (!s.active) continue;
+      this.hitFinalSword(s, amount);
+    }
+  }
+
+  // inicia la oleada 5: el boss final aparece desde la derecha con slide-in
+  startFinalBoss() {
+    if (this.finalBossActive || this.finalBoss) return;
+
+    this.finalBossActive = true;
+    this.victoryPending = true; // durante el boss final no aparecen enemigos
+
+    // explosión que elimina a todos los enemigos que hubiera
+    if (this.spawner) this.spawner.clearEnemies();
+
+    // en dificultad EXTREMA no se confiscan las armas ni se muestra el mensaje
+    this.isExtremeRun = (this.game.selectedDifficulty || 1) >= 1.8;
+    if (!this.isExtremeRun) {
+      // se confiscan las armas: solo el BLASTER
+      this.player.setWeapon(CFG.DEFAULT_WEAPON);
+      this.reloadWeapon();
+      this.grenadeShotsLeft = 0;
+      this.fireQueue = [];
+    }
+
+    this.finalBoss = new FinalBoss(this);
+
+    // alarma: planetas rojos + música del boss + WARNING + calavera
+    this.setPlanetDanger(true);
+    this.fadeMusic(this.game.music, 0, 500, () => {
+      if (this.game.music && this.game.music.isPlaying) this.game.music.pause();
+    });
+    if (this.game.finalBossMusic) {
+      if (!this.game.finalBossMusic.isPlaying) this.game.finalBossMusic.play();
+      this.game.finalBossMusic.setVolume(0);
+      this.fadeMusic(this.game.finalBossMusic, 0.5, 500);
+    }
+    this.showFinalBossWarning();
+
+    this.events.emit('final-boss-spawned');
+    this.events.emit('wave-started', CFG.TOTAL_WAVES);
+  }
+
+  // atajo May+V: elimina al boss final al instante y muestra la victoria
+  forceFinalVictory() {
+    if (!this.finalBoss || !this.finalBoss.sprite.active) {
+      this.startFinalBoss();
+    }
+    if (this.finalBoss && this.finalBoss.sprite.active) {
+      this.finalBoss.damage(CFG.FINAL_BOSS_LIFE);
+    }
+  }
+
+  // aviso WARNING con calavera y el texto de las armas confiscadas
+  showFinalBossWarning() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+
+    const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xff2222).setAlpha(0);
+    this.tweens.add({
+      targets: flash,
+      alpha: { from: 0, to: 0.35 },
+      duration: 120,
+      yoyo: true,
+      repeat: 5,
+      onComplete: () => flash.destroy(),
+    });
+
+    // textura procedural de la calavera
+    if (!this.textures.exists('skull_img')) {
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      g.fillStyle(0xf0f0f0, 1);
+      g.fillRoundedRect(8, 10, 32, 26, 6);
+      g.fillStyle(0x05070f, 1);
+      g.fillRect(13, 16, 8, 9);
+      g.fillRect(27, 16, 8, 9);
+      g.fillTriangle(22, 22, 26, 22, 24, 27);
+      g.fillStyle(0x05070f, 1);
+      g.fillRect(18, 30, 4, 5);
+      g.fillRect(23, 30, 4, 5);
+      g.fillRect(28, 30, 4, 5);
+      g.generateTexture('skull_img', 48, 48);
+      g.destroy();
+    }
+
+    const skull = this.add.image(W / 2, H / 2 - 90, 'skull_img').setScale(1.4).setAlpha(0);
+    this.tweens.add({
+      targets: skull,
+      alpha: { from: 0, to: 1 },
+      duration: 120,
+      yoyo: true,
+      repeat: 7,
+      onComplete: () => skull.destroy(),
+    });
+
+    const alert = this.add.text(W / 2, H / 2 - 160, '⚠ WARNING ⚠', {
+      fontFamily: 'monospace',
+      fontSize: '44px',
+      color: '#ff2b2b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setAlpha(0);
+    this.tweens.add({
+      targets: alert,
+      alpha: { from: 0, to: 1 },
+      duration: 120,
+      yoyo: true,
+      repeat: 7,
+      onComplete: () => alert.destroy(),
+    });
+
+    // en EXTREMO no se muestra el mensaje de confiscación de armas
+    if (!this.isExtremeRun) {
+      const info = this.add.text(W / 2, H / 2 - 10, 'Has entrado en la zona prohibida, tus armas han sido confiscadas y solo puedes usar el BLASTER', {
+        fontFamily: 'monospace',
+        fontSize: '18px',
+        color: '#ffd93b',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: W - 120 },
+      }).setOrigin(0.5, 0.5).setAlpha(0);
+      // desaparece junto con el warning (mismo timing que la alerta y la calavera)
+      this.tweens.add({
+        targets: info,
+        alpha: { from: 0, to: 1 },
+        duration: 120,
+        yoyo: true,
+        repeat: 7,
+        onComplete: () => info.destroy(),
+      });
+    }
+
+    const border = this.add.graphics();
+    const drawBorder = () => {
+      border.clear();
+      border.lineStyle(6, 0xff2b2b, 0.8);
+      border.strokeRect(3, 3, W - 6, H - 6);
+    };
+    drawBorder();
+    this.tweens.add({
+      targets: border,
+      alpha: { from: 0.2, to: 1 },
+      duration: 150,
+      yoyo: true,
+      repeat: 8,
+      onComplete: () => border.destroy(),
+    });
+  }
+
+  // una bala del jugador toca una espada:
+  // - espada normal -> se orienta al boss y vuelve a gran velocidad
+  // - espada fantasma -> se destruye (el jugador debe eliminarlas)
+  onBulletFinalSword(bullet, swordSprite) {
+    bullet.destroy();
+    const h = swordSprite.getData('handler');
+    if (!h) return;
+    if (h.ghost || h.red) {
+      // las espadas fantasma y roja se destruyen disparándoles (la roja tiene 2 vidas)
+      h.life -= 1;
+      if (h.life <= 0) {
+        this.spawnExplosion(swordSprite.x, swordSprite.y, CFG.ENEMY_EXPLOSION_RADIUS);
+        if (this.game.sfx) this.game.sfx.explosion(0.6);
+        h.destroy();
+      } else {
+        // parpadeo al recibir el primer impacto
+        swordSprite.setTint(0xffffff);
+        this.time.delayedCall(60, () => {
+          if (swordSprite.active) swordSprite.setTint(h.red ? CFG.RED_SWORD_COLOR : CFG.GHOST_COLOR);
+        });
+      }
+    } else {
+      h.returnToBoss();
+      if (this.game.sfx) this.game.sfx.shot(0.3);
+    }
+  }
+
+  // resta vida a una espada; se destruye (con explosión) al llegar a 0
+  hitFinalSword(swordSprite, amount) {
+    if (!swordSprite || !swordSprite.active) return;
+    const h = swordSprite.getData('handler');
+    if (!h) return;
+    h.life -= amount;
+    if (h.life <= 0) {
+      this.spawnExplosion(swordSprite.x, swordSprite.y, CFG.ENEMY_EXPLOSION_RADIUS);
+      if (this.game.sfx) this.game.sfx.explosion(0.6);
+      h.destroy();
+    }
+  }
+
+  // espada devuelta que impacta contra el boss final: 50 de daño
+  checkReturnedSwordHit() {
+    if (!this.finalBoss || !this.finalBoss.sprite.active) return;
+    const boss = this.finalBoss.sprite;
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (!s.active) continue;
+      const h = s.getData('handler');
+      if (!h || !h.returning) continue;
+      const dist = Phaser.Math.Distance.Between(s.x, s.y, boss.x, boss.y);
+      if (dist < boss.width * 0.6) {
+        this.spawnExplosion(boss.x, boss.y, 40);
+        if (this.game.sfx) this.game.sfx.explosion(0.7);
+        h.destroy();
+        this.finalBoss.damage(CFG.FINAL_SWORD_BOSS_DAMAGE);
+      }
+    }
+  }
+
+  // espadas que cruzan la línea del jugador
+  checkSwordPlayerLine() {
+    const lineX = CFG.PLAYER_X;
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (!s.active) continue;
+      const h = s.getData('handler');
+      if (!h || h.returning || h.passedLine) continue;
+      if (s.x <= lineX) {
+        h.passedLine = true;
+        const dmg = h.ghost ? CFG.GHOST_SWORD_DAMAGE : CFG.FINAL_SWORD_DAMAGE;
+        this.player.damage(dmg);
+        this.events.emit('player-hurt', this.player.health);
+        if (this.game.sfx) this.game.sfx.damage();
+        this.spawnShieldExplosion(s.x, s.y);
+        this.spawnShieldFlash();
+        h.destroy();
+        if (!this.player.isAlive() && !this.gameOver) {
+          this.endGame();
+        }
+      }
+    }
+  }
+
   onBossKilled(boss, bossSprite) {
     // a partir de aquí no deben aparecer más enemigos hasta la siguiente fase
     this.victoryPending = true;
@@ -331,6 +600,124 @@ class GameScene extends Phaser.Scene {
 
     // se espera a que termine la explosión del BOSS y después suena la victoria
     this.time.delayedCall(CFG.BOSS_EXPLOSION_DELAY, () => this.showVictory());
+  }
+
+  onFinalBossKilled(boss) {
+    this.scoreSystem.add(boss.points);
+    this.events.emit('enemy-killed', boss.points);
+
+    this.player.heal(CFG.BOSS_HEAL_AMOUNT);
+    this.events.emit('player-hurt', this.player.health);
+
+    this.spawnExplosion(boss.sprite.x, boss.sprite.y, CFG.BOSS_EXPLOSION_RADIUS);
+    if (this.game.sfx) this.game.sfx.explosion(1);
+
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (s.active) {
+        this.spawnExplosion(s.x, s.y, CFG.ENEMY_EXPLOSION_RADIUS);
+        s.destroy();
+      }
+    }
+
+    this.setPlanetDanger(false);
+    this.fadeMusic(this.game.finalBossMusic, 0, 500, () => {
+      if (this.game.finalBossMusic && this.game.finalBossMusic.isPlaying) this.game.finalBossMusic.stop();
+    });
+
+    this.time.delayedCall(CFG.BOSS_EXPLOSION_DELAY, () => this.showFinalVictory());
+  }
+
+  // pantalla de victoria final: CONTINUAR (dificultad superior) o TERMINAR
+  showFinalVictory() {
+    if (this.finalVictoryShown) return;
+    this.finalVictoryShown = true;
+    this.victoryPending = true;
+    const { WIDTH: W, HEIGHT: H } = CFG;
+
+    const title = this.add.text(W / 2, H / 2 - 120, 'VENGANZA CUMPLIDA', {
+      fontFamily: 'monospace',
+      fontSize: '46px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setAlpha(0).setScale(0.6).setDepth(90);
+    this.tweens.add({
+      targets: title,
+      alpha: 1,
+      scale: { from: 0.6, to: 1 },
+      duration: 500,
+      ease: 'Back.easeOut',
+    });
+
+    this.add.text(W / 2, H / 2 + 10, "Madre mía!!! Hay más enemigos!!! No quieren atacarte pero tú puedes atacarlos, ¿qué quieres hacer?", {
+      fontFamily: 'monospace',
+      fontSize: '18px',
+      color: '#c8d2ea',
+      align: 'center',
+      wordWrap: { width: W - 160 },
+    }).setOrigin(0.5, 0.5).setDepth(90);
+
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.5).setDepth(88).setInteractive();
+
+    this.add.text(W / 2, H / 2 + 60, 'Pulsa ENTER o toca CONTINUAR para seguir', {
+      fontFamily: 'monospace', fontSize: '15px', color: '#9aa7c8',
+    }).setOrigin(0.5, 0.5).setDepth(90);
+
+    const contBtn = this.add.rectangle(W / 2 - 140, H / 2 + 120, 240, 50, 0x1a2340).setDepth(91).setInteractive();
+    this.add.text(W / 2 - 140, H / 2 + 120, 'CONTINUAR', {
+      fontFamily: 'monospace', fontSize: '20px', color: '#39ff6e', fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setDepth(92);
+    contBtn.on('pointerover', () => contBtn.setFillStyle(0x2a3a5a, 1));
+    contBtn.on('pointerout', () => contBtn.setFillStyle(0x1a2340, 1));
+    contBtn.on('pointerdown', () => this.continueHigherDifficulty());
+
+    const endBtn = this.add.rectangle(W / 2 + 140, H / 2 + 120, 240, 50, 0x1a2340).setDepth(91).setInteractive();
+    this.add.text(W / 2 + 140, H / 2 + 120, 'TERMINAR', {
+      fontFamily: 'monospace', fontSize: '20px', color: '#ff5a5a', fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setDepth(92);
+    endBtn.on('pointerover', () => endBtn.setFillStyle(0x2a3a5a, 1));
+    endBtn.on('pointerout', () => endBtn.setFillStyle(0x1a2340, 1));
+    endBtn.on('pointerdown', () => this.endFinalGame());
+
+    // solo se continúa con ENTER (o los botones); un click genérico no avanza
+    this.input.keyboard.once('keydown-ENTER', () => this.continueHigherDifficulty());
+  }
+
+  // CONTINUAR: reinicia el juego en la dificultad superior manteniendo la puntuación
+  continueHigherDifficulty() {
+    // selectedDifficulty se guarda como NÚMERO (el multiplicador, igual que BootScene)
+    const cur = this.game.selectedDifficulty || 1;
+    let next = cur;
+    for (const d of Object.values(CFG.DIFFICULTIES)) {
+      if (d.mult > cur + 0.0001) { next = d.mult; break; }
+    }
+    this.game.selectedDifficulty = next;
+    this.game.retainedScore = this.scoreSystem.score;
+    this.scene.stop('UIScene');
+    this.scene.stop('GameScene');
+    // reinicio defensivo de la instancia reutilizada (mismo patrón que BootScene.start)
+    const gs = this.scene.get('GameScene');
+    if (gs) {
+      gs.wave = 1;
+      gs.difficulty = next;
+      gs.startTime = this.time.now;
+      gs.gameplayTime = 0;
+      gs.inTransition = false;
+      gs.gameOver = false;
+      gs.victoryPending = false;
+      gs.finalBossActive = false;
+      if (gs.spawner) gs.spawner.resetWave();
+    }
+    this.scene.start('GameScene');
+    this.scene.launch('UIScene');
+  }
+
+  // TERMINAR: registra el récord y vuelve al menú principal
+  endFinalGame() {
+    this.game.records.submit(this.scoreSystem.score);
+    this.scene.stop('UIScene');
+    this.scene.stop('GameScene');
+    this.scene.start('BootScene');
   }
 
   // fundido de volumen de una pista de música (Phaser tweenea la propiedad volume)
@@ -493,6 +880,11 @@ class GameScene extends Phaser.Scene {
     this.shopOpened = false;
     this.victoryPending = false;
     this.events.emit('wave-started', this.wave);
+
+    // la oleada 5 es el boss final: aparece al entrar en ella
+    if (this.wave >= CFG.TOTAL_WAVES) {
+      this.time.delayedCall(100, () => this.startFinalBoss());
+    }
   }
 
   // alarma visual al aparecer el BOSS: flash rojo + planetas rojos + alerta
@@ -585,12 +977,13 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  endGame() {
+    endGame() {
     this.gameOver = true;
     this.setAimCursor(false);
     if (this.aimSprite) this.aimSprite.setVisible(false);
     if (this.game.music && this.game.music.isPlaying) this.game.music.stop();
     if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.stop();
+    if (this.game.finalBossMusic && this.game.finalBossMusic.isPlaying) this.game.finalBossMusic.stop();
     this.scene.pause();
     const ui = this.scene.get('UIScene');
     if (ui) ui.showGameOver(this.scoreSystem.score);
@@ -811,6 +1204,20 @@ class GameScene extends Phaser.Scene {
 
     // mover estrellas de power up que caen
     if (this.powerUpSystem) this.powerUpSystem.update(delta);
+
+    // lógica del boss final: lanza espadas, las mueve, y controla daños
+    // (congelado durante el TIME STOP, igual que los enemigos)
+    if (this.finalBoss && this.finalBossActive && !this.timestopActive) {
+      this.finalBoss.update(delta);
+      const swords = this.finalSwords.getChildren().slice();
+      for (const s of swords) {
+        if (!s.active) continue;
+        const h = s.getData('handler');
+        if (h && h.update) h.update(delta);
+      }
+      this.checkReturnedSwordHit();
+      this.checkSwordPlayerLine();
+    }
 
     // spawn y movimiento de enemigos / boss (congelados durante el TIME STOP
     // y durante la pantalla de victoria, donde no deben aparecer más enemigos)

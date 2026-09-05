@@ -98,6 +98,23 @@ class UIScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
+    // ---- Nivel de dificultad (justo debajo de la fase) ----
+    // selectedDifficulty se guarda como multiplicador numérico
+    const selMult = this.game.selectedDifficulty || 1;
+    let diffLabel = 'MEDIO';
+    for (const key in CFG.DIFFICULTIES) {
+      if (Math.abs(CFG.DIFFICULTIES[key].mult - selMult) < 0.001) {
+        diffLabel = CFG.DIFFICULTIES[key].label;
+        break;
+      }
+    }
+    this.diffText = this.add.text(W / 2, 42, 'DIFICULTAD: ' + diffLabel, {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+
     // ---- Barra de vida del BOSS (arriba a la derecha) ----
     this.bossBack = this.add.rectangle(W - 20, 20, 190, 18, 0x1a2340).setOrigin(1, 0);
     this.bossBack.setVisible(false);
@@ -112,6 +129,20 @@ class UIScene extends Phaser.Scene {
     this.bossLabel.setVisible(false);
     this.bossBarVisible = false;
 
+    // ---- Barra de vida del BOSS FINAL (arriba a la derecha) ----
+    this.finalBossBack = this.add.rectangle(W - 20, 20, 190, 18, 0x1a2340).setOrigin(1, 0);
+    this.finalBossBack.setVisible(false);
+    this.finalBossFill = this.add.graphics();
+    this.finalBossFill.setVisible(false);
+    this.finalBossLabel = this.add.text(W - 20, 40, '', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(1, 0);
+    this.finalBossLabel.setVisible(false);
+    this.finalBossBarVisible = false;
+
     const gameScene = this.scene.get('GameScene');
     if (gameScene) {
       gameScene.events.on('player-hurt', this.setHealth, this);
@@ -121,6 +152,8 @@ class UIScene extends Phaser.Scene {
       gameScene.events.on('wave-started', this.setWave, this);
       gameScene.events.on('inventory-changed', this.setInventory, this);
       gameScene.events.on('ammo-changed', this.setAmmo, this);
+      gameScene.events.on('final-boss-spawned', this.showFinalBossBar, this);
+      gameScene.events.on('final-boss-hurt', this.setFinalBossHealth, this);
     }
     this.setInventory([]);
 
@@ -209,6 +242,30 @@ class UIScene extends Phaser.Scene {
     this.setBossHealth(CFG.BOSS_LIFE);
   }
 
+  showFinalBossBar() {
+    this.finalBossBarVisible = true;
+    this.finalBossBack.setVisible(true);
+    this.finalBossFill.setVisible(true);
+    this.finalBossLabel.setVisible(true);
+    this.setFinalBossHealth(CFG.FINAL_BOSS_LIFE);
+  }
+
+  setFinalBossHealth(life) {
+    const max = CFG.FINAL_BOSS_LIFE;
+    if (life <= 0) {
+      this.finalBossBarVisible = false;
+      this.finalBossBack.setVisible(false);
+      this.finalBossFill.setVisible(false);
+      this.finalBossLabel.setVisible(false);
+      return;
+    }
+    const pct = Phaser.Math.Clamp(life / max, 0, 1);
+    this.finalBossFill.clear();
+    this.finalBossFill.fillStyle(0xffd93b, 1);
+    this.finalBossFill.fillRect(CFG.WIDTH - 208, 21, 188 * pct, 16);
+    this.finalBossLabel.setText('BOSS FINAL ' + Math.ceil(life) + '/' + max);
+  }
+
   setBossHealth(life) {
     const max = CFG.BOSS_LIFE;
     if (life <= 0) {
@@ -276,7 +333,7 @@ class UIScene extends Phaser.Scene {
       color: '#9aa7c8',
     }).setOrigin(0.5, 0.5);
 
-    const hint = this.add.text(W / 2, H / 2 + 70, 'Pulsa ENTER o toca la pantalla para reiniciar', {
+    const hint = this.add.text(W / 2, H / 2 + 40, 'Pulsa ENTER para reiniciar', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#ffffff',
@@ -289,8 +346,25 @@ class UIScene extends Phaser.Scene {
       repeat: -1,
     });
 
+    // botón VOLVER: hay que hacer click en él (no se quita la pantalla con un click cualquiera)
+    const backBtn = this.add.rectangle(W / 2, H / 2 + 100, 200, 46, 0x1a2340).setStrokeStyle(2, 0x4dd4ff, 1).setInteractive({ useHandCursor: true });
+    const backText = this.add.text(W / 2, H / 2 + 100, 'VOLVER', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#4dd4ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    backBtn.on('pointerover', () => {
+      backBtn.setFillStyle(0x2a3a5a, 1);
+      backText.setColor('#ffffff');
+    });
+    backBtn.on('pointerout', () => {
+      backBtn.setFillStyle(0x1a2340, 1);
+      backText.setColor('#4dd4ff');
+    });
+    backBtn.on('pointerdown', () => this.restart());
+
     this.input.keyboard.once('keydown-ENTER', this.restart, this);
-    this.input.once('pointerdown', this.restart, this);
   }
 
   restart() {

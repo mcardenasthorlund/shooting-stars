@@ -75,6 +75,12 @@
 | 71 | Botón **INSTALAR APP** arriba-izquierda (con icono de descarga) que lanza el instalador PWA cuando el navegador dispara `beforeinstallprompt` | ✅ |
 | 72 | Fullscreen automático en el primer toque (solo móviles táctiles, también en PWA standalone) sin botón | ✅ |
 | — | Versión actualizada a **0.7-preview** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 73 | **BOSS FINAL (oleada 5)**: 5 oleadas, boss final en la 5ª con slide-in desde la derecha, estático; espadas normales rebotantes (20 de daño, vuelven al boss al ser tocadas → 50 daño), espadas fantasma azul-verdosas (10 de daño, deben destruirse), ataque especial de 10 fantasmas horizontales cada 20s; 750 HP inmune a balas; explosión que limpia enemigos al aparecer; WARNING + calavera + texto de armas confiscadas; se fuerza el BLASTER | ✅ |
+| 74 | Pantalla final "VENGANZA CUMPLIDA" con CONTINUAR (dificultad superior manteniendo puntuación, máx. EXTREMO) o TERMINAR (récord + menú); barra de vida "BOSS FINAL" propia en el HUD | ✅ |
+| 75 | Música del boss final `assets/audio/boss-final.mp3` (reutiliza `boss_final_music` con fades) + comando **May+C** (Shift+C) para iniciar la oleada 5 | ✅ |
+| 76 | Ajustes boss final: espadas 3x, ángulo hacia delante, más lentas y giro lento; siempre fantasmas (cada 0.75s), espada normal cada 10s y espada roja de 2 vidas cada 3s; velocidad 1x-2x y escalada por dificultad; boss a 200×600 con vaivén suave; música `boss-final.mp3`; May+V elimina al boss | ✅ |
+| 77 | Power ups interactúan con espadas (BIG BOOM, GRANADE, TIMESTOP); nivel de dificultad visible bajo la fase; en EXTREMO no se confiscan las armas ni el mensaje; límite de Enemy3 en dificultad alta | ✅ |
+| 78 | Pantalla de victoria final solo sale con ENTER o botón CONTINUAR; Game Over no se quita con click genérico (botón VOLVER); CONTINUAR mantiene la puntuación y arregla los spawns; versión **0.8-prerelease** | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -98,6 +104,7 @@ SHOOTING STARS/
     │   ├── Enemy.js         # enemigo + variantes
     │   ├── Enemy3.js        # enemigo de fase 2+ que dispara meteoritos aimbot
     │   ├── Boss.js          # jefe (10 pts, 60s)
+    │   ├── FinalBoss.js     # BOSS FINAL de la oleada 5 (estático + espadas/fantasmas)
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
     │   ├── Star.js          # estrellas fugaces del fondo
     │   ├── Planet.js        # capas parallax de planetas
@@ -531,3 +538,66 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - Tabla de mejores puntuaciones (top scores).
 - BOSS con fases o patrones de ataque.
 - Más pistas musicales / ajuste de volumen en opciones.
+
+## Sesión actual (ajustes del BOSS FINAL v0.8-prerelease)
+
+### 76. BOSS FINAL pulido ✅
+- Espadas **3× más grandes** (`FINAL_SWORD_SIZE: 108`), salen **siempre hacia delante** (nunca a la derecha) en abanico `PI ± 0.9`, más **lentas** (`FINAL_SWORD_SPEED: 120`) y con **giro más lento** (`FINAL_SWORD_ROT_SPEED: 2`).
+- Cadencia de espadas: **fantasmas** cada 0.75s, **espada normal** (que vuelve contra el boss) cada **10s** (`FINAL_SWORD_INTERVAL_NORMAL`), y **espada roja de 2 vidas** cada **3s** (`FINAL_SWORD_RED_INTERVAL`).
+- Espadas aparecen desde **cualquier posición del eje Y** y con **ángulo aleatorio** para despistar al jugador; velocidad variable **1x-2x**.
+- **Escalado por dificultad**: a mayor dificultad, intervalos de lanzamiento menores (más espadas) y velocidad × dificultad.
+- Sprite del boss final en su proporción real **200×600px** (`FINAL_BOSS_WIDTH/HEIGHT`, ocupa todo el alto) y con un **vaivén horizontal suave** tras el slide-in.
+- Música del boss final `assets/audio/boss-final.mp3` (`boss_final_music`) con fades.
+- Comandos: **May+C** inicia la oleada 5 y **May+V** (`forceFinalVictory`) elimina al boss y muestra la victoria.
+
+### 77. Power ups, dificultad y balanceo ✅
+- **Power ups funcionan con las espadas** igual que con los enemigos: `BIG BOOM` daña todas las espadas (`damageAllSwords`/`hitFinalSword`), la explosión de `GRANADE` daña las espadas en su radio y `TIMESTOP` congela también las espadas (velocidad a 0).
+- **Nivel de dificultad** visible justo debajo del indicador de fase (`DIFICULTAD: FÁCIL/MEDIO/DIFÍCIL/EXTREMO`, resuelto desde el multiplicador).
+- En dificultad **EXTREMA** (mult ≥ 1.8) al llegar a la oleada 5 **no se confiscan las armas** ni se muestra el mensaje de confiscación (solo el WARNING + calavera).
+- **Enemy3 limitado** en dificultad alta: probabilidad `0.25 / dificultad` y tope de **3 simultáneos** (`ENEMY3_MAX_ACTIVE`, `countActiveEnemy3`).
+
+### 78. Salidas y flujo de la victoria ✅
+- Pantalla de **victoria final** solo avanza con **ENTER** o el botón **CONTINUAR** (sin click genérico).
+- **Game Over** ya no se cierra con un click cualquiera: aparece un botón **VOLVER** (además de ENTER).
+- **CONTINUAR** (dificultad superior) mantiene la puntuación y corrige los spawns tras el reinicio (el multiplicador de dificultad se guarda como número, no como clave).
+- Versión actualizada a **0.8-prerelease** (`CFG.VERSION` y `sw.js`).
+
+## Verificación
+- `node --check` de todos los archivos JS modificados: OK (`config.js`, `FinalBoss.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`, `EnemySpawner.js`, `ScoreSystem.js`).
+- Prueba en navegador pendiente: oleada 5, espadas/rebotes, devolución de espadas al boss, ataque especial 20s, espada roja, CONTINUAR/TERMINAR, May+C/May+V, power ups sobre espadas y balanceo de dificultad.
+
+## Sesión actual (BOSS FINAL de la oleada 5)
+
+### 73. BOSS FINAL (oleada 5) ✅
+- El juego pasa a tener **5 oleadas** (`CFG.TOTAL_WAVES: 5`); la 5ª es el boss final.
+- Nuevo `js/objects/FinalBoss.js` (registrado en `index.html`) con clases `FinalBoss` y `FinalSword`.
+- `beginNextWave()`: al llegar a la oleada 5 (`wave >= TOTAL_WAVES`) llama a `startFinalBoss()` (diferido 100ms tras el túnel). Oleadas 1-4 conservan el BOSS normal + tienda.
+- `startFinalBoss()`:
+  - Boss estático a la derecha (`FINAL_BOSS_X: 730`) con **slide-in** desde el borde derecho (tween).
+  - **Explosión que elimina a todos los enemigos** presentes (`spawner.clearEnemies()`).
+  - Se **confiscan las armas**: `player.setWeapon(BLASTER)`, `reloadWeapon()`, `grenadeShotsLeft=0`.
+  - Alarma **WARNING** (texto, calavera procedural `skull_img` generada por código, flash rojo y borde de sirena) + mensaje *"Has entrado en la zona prohibida, tus armas han sido confiscadas y solo puedes usar el BLASTER"*.
+  - Planetas a peligro + **música del boss final** `boss_music` (`assets/audio/musica-boss.mp3`) con fades.
+- `EnemySpawner` no crea enemigos durante el boss final (bloqueado por `victoryPending`).
+- **Espadas** (`boss-final-espada.png`, grupo `finalSwords`):
+  - **Normales** cada 0.75s desde el centro del boss en dirección aleatoria, **rebotan en las paredes**; al cruzar la línea del jugador quitan **20 de vida**.
+  - Al dispararles, se **orientan al boss y vuelven a gran velocidad** (`returnToBoss`, 950 px/s); al impactar hacen **50 de daño** al boss (`checkReturnedSwordHit`).
+  - **Fantasmas** (tinte azul-verdoso `0x2fe0b0`) individuales cada 7-10s; el jugador debe **destruirlas** (1 bala, no vuelven); al cruzar la línea quitan **10 de vida**.
+  - **Ataque especial** cada 20s: **10 fantasmas en línea recta horizontal** (dcha→izq) separadas verticalmente.
+  - Al lanzar una espada el boss muestra `boss-final-2.png` durante 0.5s y vuelve a `boss-final-1.png`.
+- **Daño al boss**: **750 HP**, **inmune a las balas** (solo le afectan las espadas devueltas, 50 por impacto). Emite `final-boss-hurt`.
+
+### 74. VictoriA final + CONTINUAR/TERMINAR ✅
+- `onFinalBossKilled()`: puntos, cura +30, gran explosión, limpia espadas, restaura planetas, música off.
+- `showFinalVictory()`: **"VENGANZA CUMPLIDA"** + *"Madre mía!!! Hay más enemigos!!! No quieren atacarte pero tú puedes atacarlos, ¿qué quieres hacer?"* con dos botones:
+  - **CONTINUAR** → `continueHigherDifficulty()`: sube un nivel (FÁCIL→MEDIO→DIFÍCIL→EXTREMO, máx. EXTREMO), **mantiene la puntuación** (`retainedScore`/`ScoreSystem(initialScore)`) y relanza la partida.
+  - **TERMINAR** → `endFinalGame()`: registra el récord y vuelve a `BootScene`.
+- **HUD**: nueva barra **"BOSS FINAL"** (750) propia arriba-derecha (eventos `final-boss-spawned` / `final-boss-hurt`), oculta al morir.
+
+### 75. Música + comando de prueba ✅
+- La música del boss final es `assets/audio/musica-boss.mp3` (reutiliza la pista `boss_music` ya precargada con fades).
+- Comando **May+C** (Shift+C) en `GameScene` → `startFinalBoss()` para lanzar la oleada 5 directamente (con guard si ya está activo).
+
+## Verificación
+- `node --check` de todos los archivos JS modificados: OK (`config.js`, `FinalBoss.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`, `ScoreSystem.js`).
+- Prueba en navegador pendiente: oleada 5, espadas/rebotes, devolución de espadas al boss, ataque especial 20s, CONTINUAR/TERMINAR, May+C.

@@ -4,7 +4,7 @@
 // Al publicar una nueva versión, sube el número de VERSION para que el
 // navegador detecte un SW nuevo y aparezca el aviso "NUEVA VERSIÓN DESCARGADA".
 
-const VERSION = '0.7.1-preview';
+const VERSION = '0.8-prerelease';
 const RUNTIME = 'shooting-stars-' + VERSION + '-runtime';
 
 // Rutas del shell de la app, usadas como respaldo de navegación
