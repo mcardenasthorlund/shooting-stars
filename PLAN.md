@@ -86,6 +86,9 @@
 | 81 | Secuencia de cierre al derrotar al BOSS FINAL: `outro1-4.png` sincronizados con `victoria-final-boss-ok.mp3` (slides a 0/1.33/2.67/4s, fade de la 4ª desde el 2º 6 hasta el final de la música); transiciones con salida girando + entrada con zoom/bounce + **flash rojo**; se muestran en la UIScene por encima de los controles; el texto CONTINUAR/TERMINAR solo sale al terminar la música; atajo **May+B** para eliminar al boss final | ✅ |
 | 82 | Pantalla **INFO** del juego desde un botón en el menú principal (encima de CREDITOS): ventana modal dividida en **Enemigos / Power Ups / Armas** con la imagen, el título y la descripción de cada elemento | ✅ |
 | — | Versión actualizada a **0.8.5-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 83 | **INFO con pestañas**: la ventana de información pasa a un sistema de **tabs** (ENEMIGOS / POWER UPS / ARMAS) con el contenido de cada sección organizado en **3 columnas**; ajustes de texto, tamaños e iconos (BOSS FINAL 4x) | ✅ |
+| 84 | Pantalla de inicio pulida: texto introductorio épico ("Tú eres el último piloto...") + indicación de controles en letra pequeña; botón INFO a la izquierda, alineado con CREDITOS; overlay de rotación con el **logo del juego** | ✅ |
+| — | Versión actualizada a **0.8.6-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -542,6 +545,23 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - `BootScene.showInfo()`: ventana modal dividida en **3 secciones** — **ENEMIGOS / POWER UPS / ARMAS** — cada una con la **imagen**, el **título** y una **descripción** de cada elemento (vida, daño, forma de matar, etc.).
 - Se reutilizan las texturas ya cargadas (enemigos, power ups y armas); se cierra pulsando el overlay o el botón SALIR (mismo patrón que CREDITOS).
 - Ajuste de layout: columnas abiertas hacia la izquierda (`colX = [-285, 0, 235]`) y `wordWrap` de 115px para que el texto de la columna derecha no se salga del borde.
+
+## Sesión actual (INFO con pestañas y pantalla de inicio) — v0.8.6-prerelease
+
+### 83. Pantalla INFO con pestañas ✅
+- `BootScene.showInfo()` rediseñada: ya no se muestran las 3 secciones juntas en columnas, sino un sistema de **pestañas (tabs)** superiores — **ENEMIGOS / POWER UPS / ARMAS** — y solo se muestra la sección activa.
+- Cada pestaña es un contenedor interactivo (`makeButton`-style) que marca la activa con borde del color de la sección y texto blanco; las inactivas quedan atenuadas (`0x6a7aa8`).
+- El **contenido de cada pestaña se organiza en 3 columnas** (`colX = [-315, -85, 145]`), con los elementos distribuidos por filas; la primera columna queda **alineada con el borde izquierdo del contenedor de pestañas**.
+- Ajustes de texto: nombre a **13px** y descripción a **11px** (antes 11/9), separación entre filas aumentada a **92px** para evitar solapamientos.
+- El icono admite un multiplicador por elemento (`mult`): el **BOSS FINAL** se muestra **4× más grande** (`mult: 4`).
+- Descripciones revisadas: la **Estrella** ("1 de vida, resta 10 puntos"), la **Estrella naranja** ("3 de vida, resta 20 puntos"), el **BOSS** ("Te mata si cruza tu línea", se quita lo de "10 puntos"), el **BOSS FINAL** ("Golpea sus espadas normales para que se vuelvan contra él") y el **Enemy3** renombrado a **"Estrella dimensional"**.
+
+### 84. Pantalla de inicio y overlay de rotación ✅
+- **Texto introductorio épico** en el menú principal en sustitución de las instrucciones planas: *"Tú eres el último piloto que queda en pie. Toma tu nave, cruza la frontera prohibida y haz que paguen"*, acorde con el tono de la intro narrativa.
+- Justo debajo, en **letra más pequeña** (11px, `0x6a7aa8`): *"Apunta con el ratón o el dedo • Dispara con CLIC, ESPACIO o tocando la pantalla"*.
+- Botón **INFO** movido a la **izquierda** de "Pulsa CLIC o TOCA para comenzar", **alineado en Y con el botón CREDITOS** (ahora en `(160, H-64)` en vez de encima de CREDITOS).
+- **Overlay de rotación** (`#rotate-device`, cuando el móvil está en vertical): se añade el **logo del juego** (`assets/logo.png`, `<img id="rotate-logo">`) encima del icono de giro, centrado, con `pointer-events:none` y ancho adaptativo (240px o 70vw).
+- Versión actualizada a **0.8.6-prerelease** (`CFG.VERSION` en `config.js` y `VERSION` en `sw.js`).
 
 ## Historial de incidencias
 - **`hint is not defined` (arrranque):** el bloque del tween de `hint` y los listeners de inicio quedaron dentro de `updateRecord()`. Movidos de vuelta a `create()`.

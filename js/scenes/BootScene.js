@@ -87,14 +87,21 @@ class BootScene extends Phaser.Scene {
     logo.setScale(0.2);
     logo.setOrigin(0.5, 0.5);
 
-    const controls = this.add.text(W / 2, H / 2 + 150, [
-      'Apuntar: ratón o dedo   •   Disparar: clic, ESPACIO o tocar la pantalla',
-      'El arma rota de -90° a +90°',
-      'Aguanta 60s para que aparezca el BOSS',
+    const epic = this.add.text(W / 2, H / 2 + 140, [
+      'Tú eres el último piloto que queda en pie.',
+      'Toma tu nave, cruza la frontera prohibida y haz que paguen',
     ], {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: '15px',
       color: '#c8d2ea',
+      align: 'center',
+      lineSpacing: 4,
+    }).setOrigin(0.5, 0.5);
+
+    this.add.text(W / 2, H / 2 + 275, 'Apunta con el ratón o el dedo   •   Dispara con CLIC, ESPACIO o tocando la pantalla', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#6a7aa8',
       align: 'center',
     }).setOrigin(0.5, 0.5);
 
@@ -106,7 +113,7 @@ class BootScene extends Phaser.Scene {
 
     this.creditsBtn = this.makeButton(W - 160, H - 64, 'CREDITOS', () => this.showCredits());
     // botón de información, justo encima del de créditos
-    this.infoBtn = this.makeButton(W - 160, H - 112, 'INFO', () => this.showInfo());
+    this.infoBtn = this.makeButton(160, H - 64, 'INFO', () => this.showInfo());
 
     this.add.text(10, H - 10, 'v' + CFG.VERSION, {
       fontFamily: 'monospace',
@@ -490,21 +497,22 @@ class BootScene extends Phaser.Scene {
     win.add(title);
 
     // añade una fila de un elemento: icono + título + descripción
-    const addItem = (container, x, y, imgKey, name, desc) => {
+    const addItem = (container, x, y, imgKey, name, desc, mult) => {
+      const size = 30 * (mult || 1);
       const icon = this.add.image(x, y, imgKey).setOrigin(0.5, 0.5);
       const src = this.textures.get(imgKey).getSourceImage();
-      const scale = Math.min(30 / src.width, 30 / src.height);
+      const scale = Math.min(size / src.width, size / src.height);
       icon.setScale(scale);
 
       const nameTxt = this.add.text(x + 38, y - 9, name, {
         fontFamily: 'monospace',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#ffd93b',
         fontStyle: 'bold',
       }).setOrigin(0, 0.5);
       const descTxt = this.add.text(x + 38, y + 9, desc, {
         fontFamily: 'monospace',
-        fontSize: '9px',
+        fontSize: '11px',
         color: '#c8d2ea',
         wordWrap: { width: 115 },
         lineSpacing: 2,
@@ -518,11 +526,11 @@ class BootScene extends Phaser.Scene {
         title: 'ENEMIGOS',
         color: 0xff5a5a,
         items: [
-          { img: 'enemy_img', name: 'Estrella', desc: 'Enemigo básico. 1 vida, 1 punto. Gira y avanza hacia ti.' },
-          { img: 'enemy_variant_img', name: 'Estrella naranja', desc: 'Variante fuerte: 3 vidas, 3 puntos. Más grande y rápida.' },
-          { img: 'enemy3_img', name: 'Enemigo3', desc: 'Desde la fase 2. 2 vidas. Dispara meteoritos que te persiguen.' },
-          { img: 'boss_img', name: 'BOSS', desc: 'Aparece a los 60s. 25 de vida, 10 puntos. Al matarlo curas +30.' },
-          { img: 'final_boss1_img', name: 'BOSS FINAL', desc: 'Oleada 5. 750 de vida e inmune a balas. Lanza espadas.' },
+          { img: 'enemy_img', name: 'Estrella', desc: 'Enemigo básico. 1 de vida, resta 10 puntos. Gira y avanza hacia ti.' },
+          { img: 'enemy_variant_img', name: 'Estrella naranja', desc: 'Variante fuerte: 3 de vida, resta 20 puntos. Más grande y rápida.' },
+          { img: 'enemy3_img', name: 'Estrella dimensional', desc: 'Desde la fase 2. 2 vidas. Dispara meteoritos que te persiguen.' },
+          { img: 'boss_img', name: 'BOSS', desc: 'Aparece a los 60s. 25 de vida. Te mata si cruza tu línea. Al matarlo curas +30.' },
+          { img: 'final_boss1_img', name: 'BOSS FINAL', desc: 'Oleada 5. 750 de vida e inmune a balas. Golpea sus espadas normales para que se vuelvan contra él.', mult: 4 },
         ],
       },
       {
@@ -550,24 +558,65 @@ class BootScene extends Phaser.Scene {
       },
     ];
 
-    const colX = [-285, 0, 235];
-    const startY = -195;
-    const step = 66;
+    // pestañas (tabs) para cambiar de sección
+    const tabY = -200;
+    const tabW = 210, tabH = 40;
+    const tabX = [-210, 0, 210];
+    const contentY = -140;
+    const itemStep = 130;
 
-    sections.forEach((section, si) => {
-      const col = this.add.container(colX[si], 0);
-      const header = this.add.text(0, -232, section.title, {
+    const buildSection = (si) => {
+      const root = this.add.container(0, 0);
+      const items = sections[si].items;
+      const colX = [-315, -85, 145];
+      const cols = colX.map((x) => {
+        const c = this.add.container(x, 0);
+        root.add(c);
+        return c;
+      });
+      items.forEach((item, ii) => {
+        const ci = ii % 3;
+        const ri = Math.floor(ii / 3);
+        addItem(cols[ci], 0, contentY + ri * itemStep, item.img, item.name, item.desc, item.mult);
+      });
+      return root;
+    };
+
+    const rebuild = (active) => {
+      tabs.forEach((tab, ti) => {
+        const activeFlag = ti === active;
+        tab.rect.setFillStyle(activeFlag ? 0x1a2338 : 0x0d1424, 1);
+        tab.rect.setStrokeStyle(activeFlag ? 2 : 1, activeFlag ? sections[ti].color : 0x2a3a5a, 1);
+        tab.text.setColor(activeFlag ? '#ffffff' : '#6a7aa8');
+      });
+      if (content) content.destroy();
+      content = buildSection(active);
+      win.add(content);
+    };
+
+    const tabs = [];
+    sections.forEach((section, ti) => {
+      const tab = this.add.container(tabX[ti], tabY);
+      const rect = this.add.rectangle(0, 0, tabW, tabH, 0x0d1424, 1).setStrokeStyle(1, 0x2a3a5a, 1);
+      const text = this.add.text(0, 0, section.title, {
         fontFamily: 'monospace',
-        fontSize: '15px',
-        color: '#' + section.color.toString(16).padStart(6, '0'),
+        fontSize: '14px',
+        color: '#6a7aa8',
         fontStyle: 'bold',
       }).setOrigin(0.5, 0.5);
-      col.add(header);
-      section.items.forEach((item, ii) => {
-        addItem(col, 0, startY + ii * step, item.img, item.name, item.desc);
+      tab.add([rect, text]);
+      tab.setSize(tabW, tabH);
+      tab.setInteractive({ useHandCursor: true });
+      tab.on('pointerdown', (pointer, localX, localY, event) => {
+        event.stopPropagation();
+        rebuild(ti);
       });
-      win.add(col);
+      win.add(tab);
+      tabs.push({ rect, text });
     });
+
+    let content = null;
+    rebuild(0);
 
     const exitBtn = this.add.container(0, 255);
     const exitRect = this.add.rectangle(0, 0, 120, 34, 0x1a2338, 1).setStrokeStyle(1, 0xff5a5a, 1);

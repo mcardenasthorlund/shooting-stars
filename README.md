@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.8.5-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.8.6-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -168,7 +168,7 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **82 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **84 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
@@ -178,7 +178,9 @@ La versión **v0.8-prerelease** añadió el **BOSS FINAL** de la **oleada 5**: a
 
 La versión **v0.8.1-prerelease** corrige un bug de dificultad del **BOSS FINAL**: antes su ritmo y la velocidad de sus espadas escalaban con la dificultad **acumulada por oleadas** (+0.25 por fase), por lo que en niveles bajos (p. ej. FÁCIL) llegaba a la oleada 5 con una dificultad casi de EXTREMO. Ahora el boss final escala con la **dificultad base seleccionada** al empezar la partida, de forma acorde al nivel elegido.
 
-La versión **v0.8.5-prerelease** es la versión actual del juego. Añade el nuevo power up **🕳️ BLACK HOLE**: al activarlo aparece un agujero negro en la mitad derecha de la pantalla que **atrae a todos los enemigos** (y meteoritos y espadas) desde cualquier distancia y los **atrapa orbitando** sin que puedan escapar, durante **10s** con cuenta atrás. Además, al derrotar al **BOSS FINAL** ahora se reproduce una **secuencia de cierre**: 4 imágenes (`outro1-4`) sincronizadas con la música `victoria-final-boss-ok.mp3`, con transiciones de salida girando + entrada con zoom/bounce y **flash rojo**, mostradas por encima de los controles; el texto CONTINUAR/TERMINAR solo aparece al terminar la música. También hay una nueva **pantalla INFO** accesible desde un botón en el menú principal (encima de CREDITOS) con las secciones **Enemigos / Power Ups / Armas**, cada una con la imagen, el título y la descripción de sus elementos.
+La versión **v0.8.6-prerelease** es la versión actual del juego. Rediseña la **pantalla INFO**: ahora se organiza en **pestañas** (ENEMIGOS / POWER UPS / ARMAS) y el contenido de cada una se muestra en **3 columnas**, con textos más grandes y una descripción revisada de cada enemigo (por ejemplo, el **Enemy3** pasa a llamarse **"Estrella dimensional"** y el **BOSS FINAL** se muestra 4× más grande). También se pule la **pantalla de inicio**: un texto introductorio épico (*"Tú eres el último piloto que queda en pie..."*), una indicación de controles en letra pequeña, el botón INFO a la izquierda alineado con CREDITOS, y el **logo del juego** en la pantalla de giro del móvil.
+
+## Historial de incidencias
 
 ---
 

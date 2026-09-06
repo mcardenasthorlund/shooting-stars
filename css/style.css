@@ -183,6 +183,15 @@ body {
   text-align: center;
 }
 
+#rotate-device #rotate-logo {
+  width: 240px;
+  max-width: 70vw;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 #rotate-device .rotate-icon {
   font-size: 64px;
   color: #4dd4ff;
