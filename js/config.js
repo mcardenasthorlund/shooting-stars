@@ -1,5 +1,5 @@
 const CFG = Object.freeze({
-  VERSION: '0.8.1-prerelease',
+  VERSION: '0.8.5-prerelease',
   WIDTH: 800,
   HEIGHT: 600,
 
@@ -123,6 +123,14 @@ const CFG = Object.freeze({
   BIG_BOOM_DAMAGE: 3,             // puntos de vida que resta BIG BOOM a cada enemigo
   RIOT_SHIELD_AMOUNT: 30,         // vida extra del escudo RIOT SHIELD
   TIMESTOP_DURATION: 5000,        // duración en ms del TIME STOP (congela a los enemigos)
+  BLACK_HOLE_IMG: 'assets/black_hole_1.png', // imagen del agujero negro en pantalla
+  BLACK_HOLE_SIZE: 135,           // tamaño (px) del agujero negro (1.5x de 90)
+  BLACK_HOLE_DURATION: 10000,     // duración en ms del BLACK HOLE (atrae a los enemigos)
+  BLACK_HOLE_PULL: 150,           // velocidad de atracción (px/s) hacia el agujero (atrae desde cualquier distancia)
+  BLACK_HOLE_CAPTURE_RADIUS: 140, // radio (px) dentro del cual los enemigos quedan atrapados orbitando
+  BLACK_HOLE_ANGULAR_SPEED: 2.0,  // velocidad angular (rad/s) de los enemigos en órbita
+  BLACK_HOLE_ORBIT_RADIUS: 12,    // radio (px) del movimiento circular muy leve
+  BLACK_HOLE_ORBIT_SPEED: 0.8,    // rad/s de la órbita circular
 
   // ---- GRANADE ----
   GRANADE_SHOTS: 10,              // granadas que disparas al activar el power up
@@ -142,6 +150,7 @@ const CFG = Object.freeze({
     SHIELD: { label: 'SHIELD', color: 0x4dd4ff, icon: 'S', img: 'powerup_shield_img' },
     TIMESTOP: { label: 'TIMESTOP', color: 0x9aa7c8, icon: 'T', img: 'powerup_timestop_img' },
     GRANADE: { label: 'GRANADE', color: 0x8a5a2a, icon: 'G', img: 'powerup_granade_img' },
+    BLACK_HOLE: { label: 'BLACK HOLE', color: 0x7a3af0, icon: 'H', img: 'powerup_blackhole_img' },
   }),
 
   // ---- Armas (TIENDA) ----

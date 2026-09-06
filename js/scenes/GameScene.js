@@ -104,6 +104,8 @@ class GameScene extends Phaser.Scene {
     this.timestopUntil = 0;
     this.timestopOverlay = null;
     this.timestopText = null;
+    this.blackHole = null;
+    this.blackHoleUntil = 0;
     this.finalBoss = null;
     this.finalBossActive = false;
     this.finalVictoryShown = false;
@@ -136,6 +138,10 @@ class GameScene extends Phaser.Scene {
       if (event.shiftKey) this.startFinalBoss();
     });
     this.input.keyboard.on('keydown-V', (event) => {
+      if (event.shiftKey) this.forceFinalVictory();
+    });
+    // atajo May+B: elimina al boss final directamente y lanza la secuencia de cierre
+    this.input.keyboard.on('keydown-B', (event) => {
       if (event.shiftKey) this.forceFinalVictory();
     });
     this.input.keyboard.on('keydown-ONE', () => this.activateSlot(0));
@@ -281,7 +287,79 @@ class GameScene extends Phaser.Scene {
         this.grenadeShotsLeft = CFG.GRANADE_SHOTS;
         this.fireQueue = []; // descartar pulsaciones previas en cola
         break;
+      case 'BLACK_HOLE':
+        this.activateBlackHole();
+        break;
     }
+  }
+
+  // aparece un agujero negro en una posición aleatoria que atrae a los enemigos
+  activateBlackHole() {
+    // eliminar un agujero negro previo si quedara activo
+    if (this.blackHole) this.endBlackHole();
+    this.blackHole = new BlackHole(this);
+    this.blackHoleUntil = this.time.now + CFG.BLACK_HOLE_DURATION;
+
+    // cuenta atrás del efecto, justo encima del agujero
+    const s = this.blackHole.sprite;
+    this.blackHoleText = this.add.text(s.x, s.y - CFG.BLACK_HOLE_SIZE / 2 - 16, '', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#a58bff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5).setDepth(6);
+  }
+
+  endBlackHole() {
+    if (this.blackHole) {
+      this.blackHole.destroy();
+      this.blackHole = null;
+    }
+    if (this.blackHoleText) {
+      this.blackHoleText.destroy();
+      this.blackHoleText = null;
+    }
+    this.blackHoleUntil = 0;
+  }
+
+  // atrae a los enemigos, meteoritos y espadas del boss final hacia el agujero.
+  // Lejos: atracción suave. Cerca (dentro del radio de captura): quedan atrapados
+  // orbitando alrededor del agujero sin poder escapar hasta que termina el efecto.
+  applyBlackHolePull() {
+    const bh = this.blackHole;
+    if (!bh || !bh.sprite.active) return;
+    const bx = bh.sprite.x;
+    const by = bh.sprite.y;
+    const pull = CFG.BLACK_HOLE_PULL;
+    const capture = CFG.BLACK_HOLE_CAPTURE_RADIUS;
+    const ang = CFG.BLACK_HOLE_ANGULAR_SPEED;
+
+    const process = (s) => {
+      if (!s.active || !s.body) return;
+      const dx = bx - s.x;
+      const dy = by - s.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      if (dist > capture) {
+        // lejos: fuerza constante hacia el agujero (suave), sumada a la velocidad propia
+        s.body.velocity.x += (dx / dist) * pull;
+        s.body.velocity.y += (dy / dist) * pull;
+      } else {
+        // atrapado: velocidad tangencial alrededor del agujero -> órbita estable
+        const r = Math.max(dist, 24); // no colapsar en el centro
+        const tx = -dy / dist; // dirección tangencial (antihorario)
+        const ty = dx / dist;
+        const lin = ang * r;
+        s.body.velocity.x = tx * lin;
+        s.body.velocity.y = ty * lin;
+      }
+    };
+
+    if (this.spawner) {
+      const list = this.spawner.enemies.getChildren();
+      for (const s of list) process(s);
+    }
+    const swords = this.finalSwords.getChildren();
+    for (const s of swords) process(s);
   }
 
   // congela a los enemigos unos segundos: pantalla grisácea + cuenta atrás
@@ -627,7 +705,114 @@ class GameScene extends Phaser.Scene {
       if (this.game.finalBossMusic && this.game.finalBossMusic.isPlaying) this.game.finalBossMusic.stop();
     });
 
-    this.time.delayedCall(CFG.BOSS_EXPLOSION_DELAY, () => this.showFinalVictory());
+    this.time.delayedCall(CFG.BOSS_EXPLOSION_DELAY, () => this.playOutro());
+  }
+
+  // secuencia de imágenes de cierre sincronizada con la música
+  // victoria-final-boss-ok.mp3: slide 1 al inicio, 2 a 1.33s, 3 a 2.67s, 4 a 4s;
+  // las imágenes se mantienen visibles y las transiciones son solo de movimiento
+  // (sin fade), como en la intro. El texto CONTINUAR/TERMINAR solo aparece al terminar la música.
+  playOutro() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+    this.victoryPending = true;
+    this.outroStart = this.time.now;
+
+    // se muestran en la UIScene (que se renderiza por encima de la partida y el HUD),
+    // para que las imágenes queden por encima de los controles de la pantalla
+    const ui = this.scene.get('UIScene');
+
+    // música de cierre (el texto no aparece hasta que termine)
+    const music = this.sound.add('victory_final_boss', { volume: 1 });
+    music.play();
+    const totalSec = Math.max(6.01, music.totalDuration || 9);
+    const durationMs = totalSec * 1000;
+    const fadeStartMs = 6000;
+    const fadeDurMs = Math.max(0, durationMs - fadeStartMs);
+
+    const overlay = ui.add.graphics();
+    overlay.fillStyle(0x05070f, 1);
+    overlay.fillRect(0, 0, W, H);
+    overlay.setDepth(999);
+
+    let currentImg = null;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (currentImg) currentImg.destroy();
+      overlay.destroy();
+      this.showFinalVictory();
+    };
+
+    const showSlide = (imgKey, atSeconds) => {
+      this.time.delayedCall(atSeconds * 1000, () => {
+        // salida rápida de la imagen anterior: gira hacia la derecha y se desvanece
+        const prev = currentImg;
+        if (prev) {
+          this.tweens.add({
+            targets: prev,
+            angle: prev.angle + 50,
+            alpha: 0,
+            duration: 200,
+            ease: 'Sine.easeIn',
+            onComplete: () => prev.destroy(),
+          });
+        }
+        const src = this.textures.get(imgKey).getSourceImage();
+        const maxW = W - 40;
+        const maxH = H - 40;
+        const scale = Math.min(maxW / src.width, maxH / src.height);
+        // entrada con zoom rápido y bounce (overshoot de escala)
+        const img = ui.add.image(W / 2, H / 2, imgKey)
+          .setScale(scale * 0.3)
+          .setOrigin(0.5, 0.5)
+          .setAlpha(1)
+          .setDepth(1000);
+        currentImg = img;
+        this.tweens.add({
+          targets: img,
+          scale: scale,
+          duration: 380,
+          ease: 'Back.easeOut',
+        });
+
+        // flash ROJO a pantalla completa para dar énfasis
+        const flash = ui.add.rectangle(W / 2, H / 2, W, H, 0xff2b2b, 0).setDepth(1001);
+        this.tweens.add({
+          targets: flash,
+          alpha: { from: 0.85, to: 0 },
+          duration: 200,
+          ease: 'Quad.easeOut',
+          onComplete: () => flash.destroy(),
+        });
+      });
+    };
+
+    // cronología: slide 1 a 0s, 2 a 1.33s, 3 a 2.67s, 4 a 4s
+    showSlide('outro1', 0);
+    showSlide('outro2', 1.33);
+    showSlide('outro3', 2.67);
+    showSlide('outro4', 4.0);
+
+    // a partir del segundo 6, fade de la última imagen hasta el final de la música
+    this.time.delayedCall(fadeStartMs, () => {
+      if (currentImg) {
+        this.tweens.add({
+          targets: currentImg,
+          alpha: 0,
+          duration: fadeDurMs,
+          ease: 'Linear',
+        });
+      }
+    });
+
+    // el texto solo sale al terminar la música. Se usa la duración como base para no
+    // depender del evento "complete" (que puede dispararse al instante si autoplay
+    // bloquea el audio); el evento solo cuenta si ya pasaron al menos 6s.
+    this.time.delayedCall(durationMs + 150, finish);
+    music.once('complete', () => {
+      if (this.time.now >= this.outroStart + 6000) finish();
+    });
   }
 
   // pantalla de victoria final: CONTINUAR (dificultad superior) o TERMINAR
@@ -1181,6 +1366,23 @@ class GameScene extends Phaser.Scene {
       }
     }
 
+    // agujero negro: animar su órbita leve, cuenta atrás y terminar al agotarse
+    if (this.blackHole && this.blackHole.sprite.active) {
+      if (this.time.now >= this.blackHoleUntil) {
+        this.endBlackHole();
+      } else {
+        this.blackHole.update(delta);
+        if (this.blackHoleText) {
+          const remain = Math.max(0, (this.blackHoleUntil - this.time.now) / 1000);
+          this.blackHoleText.setText('BLACK HOLE  ' + remain.toFixed(1) + 's');
+          this.blackHoleText.setPosition(
+            this.blackHole.sprite.x,
+            this.blackHole.sprite.y - CFG.BLACK_HOLE_SIZE / 2 - 16
+          );
+        }
+      }
+    }
+
     // animar explosiones siempre (incluida la gran explosión del BOSS)
     this.explosions = this.explosions.filter((e) => e.update(delta));
 
@@ -1226,6 +1428,12 @@ class GameScene extends Phaser.Scene {
     if (this.spawner && !this.timestopActive && !this.victoryPending) {
       this.spawner.update(time, this.gameplayTime);
       this.spawner.updateAll(delta, time);
+    }
+
+    // el agujero negro atrae a enemigos y espadas (después de que fijen su velocidad;
+    // se respeta el congelamiento del TIME STOP)
+    if (this.blackHole && this.blackHole.sprite.active && !this.timestopActive) {
+      this.applyBlackHolePull();
     }
 
     // gestionar disparos en cola respetando el cooldown del arma (base de tiempo de escena)

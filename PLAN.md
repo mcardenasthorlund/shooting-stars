@@ -82,6 +82,10 @@
 | 77 | Power ups interactúan con espadas (BIG BOOM, GRANADE, TIMESTOP); nivel de dificultad visible bajo la fase; en EXTREMO no se confiscan las armas ni el mensaje; límite de Enemy3 en dificultad alta | ✅ |
 | 78 | Pantalla de victoria final solo sale con ENTER o botón CONTINUAR; Game Over no se quita con click genérico (botón VOLVER); CONTINUAR mantiene la puntuación y arregla los spawns; versión **0.8-prerelease** | ✅ |
 | 79 | Fix dificultad del BOSS FINAL: usaba la dificultad acumulada por oleadas (+0.25/ola), inflándose en FÁCIL a ~1.75 (≈EXTREMO); ahora escala por la dificultad base seleccionada (`baseDifficulty`); versión **0.8.1-prerelease** | ✅ |
+| 80 | Power up **BLACK HOLE** (`black_hole.png`): agujero negro (`black_hole_1.png`) que aparece desde la mitad de pantalla a la derecha, tamaño 1.25x estirado en ancho, órbita circular leve; atrae a todos los enemigos (y a meteoritos y espadas del boss final) desde cualquier distancia, los **atrapa orbitando** sin que escapen hasta que termina (10s), con cuenta atrás visible; versión **0.8.2-prerelease** | ✅ |
+| 81 | Secuencia de cierre al derrotar al BOSS FINAL: `outro1-4.png` sincronizados con `victoria-final-boss-ok.mp3` (slides a 0/1.33/2.67/4s, fade de la 4ª desde el 2º 6 hasta el final de la música); transiciones con salida girando + entrada con zoom/bounce + **flash rojo**; se muestran en la UIScene por encima de los controles; el texto CONTINUAR/TERMINAR solo sale al terminar la música; atajo **May+B** para eliminar al boss final | ✅ |
+| 82 | Pantalla **INFO** del juego desde un botón en el menú principal (encima de CREDITOS): ventana modal dividida en **Enemigos / Power Ups / Armas** con la imagen, el título y la descripción de cada elemento | ✅ |
+| — | Versión actualizada a **0.8.5-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -110,7 +114,8 @@ SHOOTING STARS/
     │   ├── Star.js          # estrellas fugaces del fondo
     │   ├── Planet.js        # capas parallax de planetas
     │   ├── PowerUp.js       # estrella de power up que cae desde arriba
-    │   └── Grenade.js       # granada parabólica del power up GRANADE
+    │   ├── Grenade.js       # granada parabólica del power up GRANADE
+    │   └── BlackHole.js     # agujero negro del power up BLACK HOLE (atrae/orbita)
     └── systems/
         ├── InputHandler.js  # ratón (apuntar/disparar) + teclado
         ├── EnemySpawner.js  # oleadas crecientes + boss
@@ -510,6 +515,33 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 ## Verificación
 - 20 archivos JS sin errores de sintaxis (`node --check`) + `sw.js` y `manifest.webmanifest` validados.
 - Prueba en navegador pendiente: abrir desde un **servidor HTTP local** (la PWA/el service worker requieren http/https, no `file://`). Probar: escalado móvil (landscape), apuntado/disparo por toque, power ups por toque, botón fullscreen, instalación como PWA, actualización (bumpear `VERSION` en `sw.js` → banner → ACTUALIZAR) y modo offline.
+
+## Sesión actual (BLACK HOLE, secuencia de cierre e INFO)
+
+### 80. Power up BLACK HOLE ✅
+- Nuevo tipo `BLACK_HOLE` en `CFG.POWER_UPS` (`assets/black_hole.png` como icono del power up).
+- **Nuevo `js/objects/BlackHole.js`** (registrado en `index.html`): el agujero usa `assets/black_hole_1.png` y **aparece desde la mitad de la pantalla hacia la derecha** (`Between(WIDTH/2, WIDTH-60)`) para que la órbita de los enemigos nunca alcance la línea de vida del jugador.
+- Tamaño **1.25x estirado en ancho** (`setDisplaySize(BLACK_HOLE_SIZE * 1.25, BLACK_HOLE_SIZE)`), movimiento circular muy leve (`BLACK_HOLE_ORBIT_RADIUS: 12`, `BLACK_HOLE_ORBIT_SPEED: 0.8`).
+- `GameScene.applyBlackHolePull()`: atrae a **todos los enemigos desde cualquier distancia** (`BLACK_HOLE_PULL: 150`) y a los que entran en `BLACK_HOLE_CAPTURE_RADIUS: 140` los **atrapa en órbita** (velocidad tangencial, `BLACK_HOLE_ANGULAR_SPEED: 2.0`) sin que puedan escapar hasta que termina el efecto. Afecta a enemigos, Enemy3, meteoritos y espadas del boss final (respeta el congelamiento del TIME STOP).
+- Duración `BLACK_HOLE_DURATION: 10000` (10s) con **cuenta atrás** `BLACK HOLE X.Xs` justo encima del agujero.
+- `config.js`: constantes `BLACK_HOLE_*`.
+
+### 81. Secuencia de cierre (outro) ✅
+- `BootScene.preload()` carga `outro1-4.png` y `assets/audio/victoria-final-boss-ok.mp3` (`victory_final_boss`).
+- `onFinalBossKilled()` ya no abre la victoria directamente: tras la gran explosión llama a `GameScene.playOutro()`.
+- `playOutro()` sincroniza las 4 imágenes con la música:
+  - Slide 1 al inicio, 2 a **1.33s**, 3 a **2.67s**, 4 a **4s**.
+  - Transiciones: la anterior **sale girando** y la nueva **entra con zoom + bounce** (`Back.easeOut`), con **flash rojo** a pantalla completa.
+  - A partir del **2º 6** un **fade** de la última imagen que culmina al final de la música.
+  - El texto **CONTINUAR/TERMINAR** solo aparece al terminar la música (base en `totalDuration`; el evento `complete` solo cuenta si ya pasaron ≥6s para evitar el disparo instantáneo por autoplay).
+  - El overlay, las imágenes y el flash se crean en la **UIScene** (`ui.add.*`), que se renderiza **por encima de los controles** del HUD.
+- Atajo **May+B** (Shift+B) en `GameScene` → `forceFinalVictory()`: elimina al boss final al instante y lanza la secuencia de cierre.
+
+### 82. Pantalla INFO ✅
+- Botón **INFO** en el menú principal, justo **encima del botón CREDITOS** (`makeButton`, en `W-160, H-112`).
+- `BootScene.showInfo()`: ventana modal dividida en **3 secciones** — **ENEMIGOS / POWER UPS / ARMAS** — cada una con la **imagen**, el **título** y una **descripción** de cada elemento (vida, daño, forma de matar, etc.).
+- Se reutilizan las texturas ya cargadas (enemigos, power ups y armas); se cierra pulsando el overlay o el botón SALIR (mismo patrón que CREDITOS).
+- Ajuste de layout: columnas abiertas hacia la izquierda (`colX = [-285, 0, 235]`) y `wordWrap` de 115px para que el texto de la columna derecha no se salga del borde.
 
 ## Historial de incidencias
 - **`hint is not defined` (arrranque):** el bloque del tween de `hint` y los listeners de inicio quedaron dentro de `updateRecord()`. Movidos de vuelta a `create()`.

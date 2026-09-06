@@ -10,6 +10,10 @@ class BootScene extends Phaser.Scene {
     this.load.image('intro_p2', 'assets/Intro_P2.png');
     this.load.image('intro_p3', 'assets/Intro_P3.png');
     this.load.image('intro_p4', 'assets/Intro_P4.png');
+    this.load.image('outro1', 'assets/outro1.png');
+    this.load.image('outro2', 'assets/outro2.png');
+    this.load.image('outro3', 'assets/outro3.png');
+    this.load.image('outro4', 'assets/outro4.png');
     this.load.image('enemy_img', CFG.ENEMY_IMG);
     this.load.image('enemy_variant_img', CFG.VARIANT_IMG);
     this.load.image('enemy_low_img', CFG.LOW_IMG);
@@ -27,6 +31,8 @@ class BootScene extends Phaser.Scene {
     this.load.image('powerup_shield_img', 'assets/Shield.png');
     this.load.image('powerup_timestop_img', 'assets/Time_Stop.png');
     this.load.image('powerup_granade_img', 'assets/Granade.png');
+    this.load.image('powerup_blackhole_img', 'assets/black_hole.png');
+    this.load.image('black_hole_img', CFG.BLACK_HOLE_IMG);
     this.load.image('weapon_revolver_img', 'assets/Revolver.png');
     this.load.image('weapon_shotgun_img', 'assets/Shotgun.png');
     this.load.image('weapon_uzi_img', 'assets/Uzi.png');
@@ -42,6 +48,7 @@ class BootScene extends Phaser.Scene {
     this.load.audio('boss_music', 'assets/audio/musica-boss.mp3');
     this.load.audio('boss_final_music', 'assets/audio/boss-final.mp3');
     this.load.audio('victory', 'assets/audio/victoria.mp3');
+    this.load.audio('victory_final_boss', 'assets/audio/victoria-final-boss-ok.mp3');
   }
 
   create() {
@@ -98,6 +105,8 @@ class BootScene extends Phaser.Scene {
     }).setOrigin(0.5, 0.5);
 
     this.creditsBtn = this.makeButton(W - 160, H - 64, 'CREDITOS', () => this.showCredits());
+    // botón de información, justo encima del de créditos
+    this.infoBtn = this.makeButton(W - 160, H - 112, 'INFO', () => this.showInfo());
 
     this.add.text(10, H - 10, 'v' + CFG.VERSION, {
       fontFamily: 'monospace',
@@ -450,6 +459,139 @@ class BootScene extends Phaser.Scene {
     });
 
     win.add([winBg, maniac, creditText, exitBtn]);
+  }
+
+  // pantalla de información del juego: 3 secciones (Enemigos / Power Ups / Armas),
+  // cada una con la imagen, el título y una descripción de cada elemento
+  showInfo() {
+    const W = CFG.WIDTH, H = CFG.HEIGHT;
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.85).setInteractive();
+    const win = this.add.container(W / 2, H / 2);
+    const close = () => {
+      win.destroy();
+      overlay.destroy();
+    };
+    overlay.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      close();
+    });
+
+    const winW = 780, winH = 570;
+    const winBg = this.add.rectangle(0, 0, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0x4dd4ff, 1);
+    win.add(winBg);
+
+    const title = this.add.text(0, -255, 'INFORMACIÓN DEL JUEGO', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    win.add(title);
+
+    // añade una fila de un elemento: icono + título + descripción
+    const addItem = (container, x, y, imgKey, name, desc) => {
+      const icon = this.add.image(x, y, imgKey).setOrigin(0.5, 0.5);
+      const src = this.textures.get(imgKey).getSourceImage();
+      const scale = Math.min(30 / src.width, 30 / src.height);
+      icon.setScale(scale);
+
+      const nameTxt = this.add.text(x + 38, y - 9, name, {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: '#ffd93b',
+        fontStyle: 'bold',
+      }).setOrigin(0, 0.5);
+      const descTxt = this.add.text(x + 38, y + 9, desc, {
+        fontFamily: 'monospace',
+        fontSize: '9px',
+        color: '#c8d2ea',
+        wordWrap: { width: 115 },
+        lineSpacing: 2,
+      }).setOrigin(0, 0);
+
+      container.add([icon, nameTxt, descTxt]);
+    };
+
+    const sections = [
+      {
+        title: 'ENEMIGOS',
+        color: 0xff5a5a,
+        items: [
+          { img: 'enemy_img', name: 'Estrella', desc: 'Enemigo básico. 1 vida, 1 punto. Gira y avanza hacia ti.' },
+          { img: 'enemy_variant_img', name: 'Estrella naranja', desc: 'Variante fuerte: 3 vidas, 3 puntos. Más grande y rápida.' },
+          { img: 'enemy3_img', name: 'Enemigo3', desc: 'Desde la fase 2. 2 vidas. Dispara meteoritos que te persiguen.' },
+          { img: 'boss_img', name: 'BOSS', desc: 'Aparece a los 60s. 25 de vida, 10 puntos. Al matarlo curas +30.' },
+          { img: 'final_boss1_img', name: 'BOSS FINAL', desc: 'Oleada 5. 750 de vida e inmune a balas. Lanza espadas.' },
+        ],
+      },
+      {
+        title: 'POWER UPS',
+        color: 0x39ff6e,
+        items: [
+          { img: 'powerup_bigboy_img', name: 'BIG BOY', desc: 'Balas 3x más grandes durante 20s.' },
+          { img: 'powerup_heal_img', name: 'HEALING', desc: 'Cura el 50% de tu vida.' },
+          { img: 'powerup_bigboom_img', name: 'BIG BOOM', desc: 'Explosión que daña a todos los enemigos.' },
+          { img: 'powerup_shield_img', name: 'SHIELD', desc: 'Escudo que absorbe 30 de daño.' },
+          { img: 'powerup_timestop_img', name: 'TIMESTOP', desc: 'Congela a los enemigos 5s.' },
+          { img: 'powerup_granade_img', name: 'GRANADE', desc: '10 granadas parabólicas con explosión de área.' },
+          { img: 'powerup_blackhole_img', name: 'BLACK HOLE', desc: 'Un agujero que atrae y atrapa enemigos 10s.' },
+        ],
+      },
+      {
+        title: 'ARMAS',
+        color: 0x4dd4ff,
+        items: [
+          { img: 'player_img', name: 'BLASTER', desc: 'Arma inicial. 1 de daño, disparo rápido.' },
+          { img: 'weapon_revolver_img', name: 'REVOLVER', desc: '3 de daño, cargador de 6 con recarga. 60 pts.' },
+          { img: 'weapon_shotgun_img', name: 'SHOTGUN', desc: '3 balas en abanico. 200 pts.' },
+          { img: 'weapon_uzi_img', name: 'UZI', desc: 'Ráfaga rapidísima de bajo daño. 500 pts.' },
+        ],
+      },
+    ];
+
+    const colX = [-285, 0, 235];
+    const startY = -195;
+    const step = 66;
+
+    sections.forEach((section, si) => {
+      const col = this.add.container(colX[si], 0);
+      const header = this.add.text(0, -232, section.title, {
+        fontFamily: 'monospace',
+        fontSize: '15px',
+        color: '#' + section.color.toString(16).padStart(6, '0'),
+        fontStyle: 'bold',
+      }).setOrigin(0.5, 0.5);
+      col.add(header);
+      section.items.forEach((item, ii) => {
+        addItem(col, 0, startY + ii * step, item.img, item.name, item.desc);
+      });
+      win.add(col);
+    });
+
+    const exitBtn = this.add.container(0, 255);
+    const exitRect = this.add.rectangle(0, 0, 120, 34, 0x1a2338, 1).setStrokeStyle(1, 0xff5a5a, 1);
+    const exitText = this.add.text(0, 0, 'SALIR', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#c8d2ea',
+    }).setOrigin(0.5, 0.5);
+    exitBtn.add([exitRect, exitText]);
+    exitBtn.setSize(120, 34);
+    exitBtn.setInteractive({ useHandCursor: true });
+    exitBtn.on('pointerover', () => {
+      exitRect.setFillStyle(0x2a3a5a, 1);
+      exitText.setColor('#ffffff');
+    });
+    exitBtn.on('pointerout', () => {
+      exitRect.setFillStyle(0x1a2338, 1);
+      exitText.setColor('#c8d2ea');
+    });
+    exitBtn.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      close();
+    });
+    win.add(exitBtn);
   }
 
   updateRecord() {

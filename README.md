@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.8.1-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.8.5-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -51,6 +51,7 @@ En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** 
   - 💙 **SHIELD** — escudo azul que absorbe el daño antes que tu vida.
   - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás. También congela las espadas del boss final.
   - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla. Las granadas también **recogen los power ups** que tocan, tanto al impactar como con su explosión, y **dañan a las espadas** del boss final.
+  - 🕳️ **BLACK HOLE** — abre un **agujero negro** en la mitad derecha de la pantalla que **atrae a todos los enemigos** desde cualquier distancia y los **atrapa orbitando** a su alrededor sin que puedan escapar, durante **10s** (con cuenta atrás). También atrae los meteoritos y las espadas del boss final.
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
 - **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta. El juego tiene **5 oleadas**; en la **quinta** aparece el **BOSS FINAL**. Al derrotarlo ves **"VENGANZA CUMPLIDA"** y puedes **CONTINUAR** (reinicia en una dificultad superior manteniendo la puntuación) o **TERMINAR** (vuelve al menú).
@@ -71,6 +72,7 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 - [💙 **SHIELD**](assets/Shield.png) — escudo que absorbe el daño.
 - [⏸ **TIMESTOP**](assets/Time_Stop.png) — congela a los enemigos.
 - [💣 **GRANADE**](assets/Granade.png) — dispara granadas parabólicas.
+- [🕳️ **BLACK HOLE**](assets/black_hole.png) — agujero negro que atrae y atrapa a los enemigos (en pantalla usa `black_hole_1.png`).
 
 ### Armas
 - [🚀 **BLASTER**](assets/logo.png) — el arma inicial, siempre disponible (usa la nave del jugador).
@@ -136,7 +138,8 @@ SHOOTING STARS/
     │   ├── Star.js          # estrellas fugaces del fondo
     │   ├── Planet.js        # capas parallax de planetas
     │   ├── PowerUp.js       # estrella de power up que cae desde arriba
-    │   └── Grenade.js       # granada parabólica del power up GRANADE
+    │   ├── Grenade.js       # granada parabólica del power up GRANADE
+    │   └── BlackHole.js     # agujero negro del power up BLACK HOLE (atrae/orbita)
     └── systems/
         ├── InputHandler.js  # ratón (apuntar/disparar) + teclado
         ├── EnemySpawner.js  # oleadas crecientes + boss
@@ -165,17 +168,17 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **78 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los nuevos power ups (TIMESTOP y GRANADE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **82 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
 En la versión v0.5.2-beta se corrigieron además tres cosas: ya **no aparecen más enemigos** durante la pantalla de victoria del BOSS, los enemigos **vuelven a aparecer desde el principio de cada fase nueva**, y las **granadas recogen los power ups** tanto al chocar directamente como con su explosión.
 
-La versión **v0.8-prerelease** es la versión actual del juego.
-
-En esta versión se ha añadido el **BOSS FINAL** de la **oleada 5**: aparece desde la derecha ocupando todo el alto, con **750 de vida** e **inmune a tus balas**; lanza **espadas fantasma** (azul-verdosas), **espadas rojas de 2 vidas**, una **espada normal** que al tocarla **vuelve contra el boss** (50 de daño) y un **ataque especial de 10 fantasmas** horizontales cada 20s. Las espadas salen en cualquier ángulo y Y, rebotan en las paredes y su ritmo y velocidad **aumentan con la dificultad**. Los **power ups** (BIG BOOM, GRANADE y TIMESTOP) ahora también afectan a las espadas. Al derrotarlo aparece **"VENGANZA CUMPLIDA"** con la opción **CONTINUAR** (dificultad superior manteniendo la puntuación) o **TERMINAR**. En dificultad **EXTREMA** el boss final no te confisca las armas. Además: el **nivel de dificultad** se muestra bajo el indicador de fase, la pantalla de Game Over y la de victoria **no se cierran con un click genérico** (botón VOLVER / CONTINUAR o ENTER), y se limita el número de **ENEMY3** en dificultad alta.
+La versión **v0.8-prerelease** añadió el **BOSS FINAL** de la **oleada 5**: aparece desde la derecha ocupando todo el alto, con **750 de vida** e **inmune a tus balas**; lanza **espadas fantasma** (azul-verdosas), **espadas rojas de 2 vidas**, una **espada normal** que al tocarla **vuelve contra el boss** (50 de daño) y un **ataque especial de 10 fantasmas** horizontales cada 20s. Las espadas salen en cualquier ángulo y Y, rebotan en las paredes y su ritmo y velocidad **aumentan con la dificultad**. Los **power ups** (BIG BOOM, GRANADE y TIMESTOP) ahora también afectan a las espadas. Al derrotarlo aparece **"VENGANZA CUMPLIDA"** con la opción **CONTINUAR** (dificultad superior manteniendo la puntuación) o **TERMINAR**. En dificultad **EXTREMA** el boss final no te confisca las armas. Además: el **nivel de dificultad** se muestra bajo el indicador de fase, la pantalla de Game Over y la de victoria **no se cierran con un click genérico** (botón VOLVER / CONTINUAR o ENTER), y se limita el número de **ENEMY3** en dificultad alta.
 
 La versión **v0.8.1-prerelease** corrige un bug de dificultad del **BOSS FINAL**: antes su ritmo y la velocidad de sus espadas escalaban con la dificultad **acumulada por oleadas** (+0.25 por fase), por lo que en niveles bajos (p. ej. FÁCIL) llegaba a la oleada 5 con una dificultad casi de EXTREMO. Ahora el boss final escala con la **dificultad base seleccionada** al empezar la partida, de forma acorde al nivel elegido.
+
+La versión **v0.8.5-prerelease** es la versión actual del juego. Añade el nuevo power up **🕳️ BLACK HOLE**: al activarlo aparece un agujero negro en la mitad derecha de la pantalla que **atrae a todos los enemigos** (y meteoritos y espadas) desde cualquier distancia y los **atrapa orbitando** sin que puedan escapar, durante **10s** con cuenta atrás. Además, al derrotar al **BOSS FINAL** ahora se reproduce una **secuencia de cierre**: 4 imágenes (`outro1-4`) sincronizadas con la música `victoria-final-boss-ok.mp3`, con transiciones de salida girando + entrada con zoom/bounce y **flash rojo**, mostradas por encima de los controles; el texto CONTINUAR/TERMINAR solo aparece al terminar la música. También hay una nueva **pantalla INFO** accesible desde un botón en el menú principal (encima de CREDITOS) con las secciones **Enemigos / Power Ups / Armas**, cada una con la imagen, el título y la descripción de sus elementos.
 
 ---
 
