@@ -239,7 +239,10 @@ class UIScene extends Phaser.Scene {
     this.bossBack.setVisible(true);
     this.bossFill.setVisible(true);
     this.bossLabel.setVisible(true);
-    this.setBossHealth(CFG.BOSS_LIFE);
+    // usa la vida real del BOSS (crece con cada oleada según la dificultad)
+    const boss = this.scene.get('GameScene').spawner.boss;
+    const max = (boss && boss.maxLife) || CFG.BOSS_LIFE;
+    this.setBossHealth(max, max);
   }
 
   showFinalBossBar() {
@@ -266,8 +269,7 @@ class UIScene extends Phaser.Scene {
     this.finalBossLabel.setText('BOSS FINAL ' + Math.ceil(life) + '/' + max);
   }
 
-  setBossHealth(life) {
-    const max = CFG.BOSS_LIFE;
+  setBossHealth(life, max = CFG.BOSS_LIFE) {
     if (life <= 0) {
       this.bossBarVisible = false;
       this.bossBack.setVisible(false);

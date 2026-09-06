@@ -19,12 +19,15 @@ class BootScene extends Phaser.Scene {
     this.load.image('enemy_low_img', CFG.LOW_IMG);
     this.load.image('enemy3_img', CFG.ENEMY3_IMG);
     this.load.image('enemy3_shot_img', CFG.ENEMY3_SHOT_IMG);
+    this.load.image('enemy4_img', CFG.ENEMY4_IMG);
+    this.load.image('enemy4_img2', CFG.ENEMY4_IMG2);
     this.load.image('boss_img', CFG.BOSS_IMG);
     this.load.image('boss_img2', CFG.BOSS_IMG2);
     this.load.image('boss_img3', CFG.BOSS_IMG3);
     this.load.image('final_boss1_img', CFG.FINAL_BOSS_IMG1);
     this.load.image('final_boss2_img', CFG.FINAL_BOSS_IMG2);
     this.load.image('final_sword_img', CFG.FINAL_SWORD_IMG);
+    this.load.image('warning_final_boss_img', 'assets/warning-final-boss.png');
     this.load.image('powerup_bigboy_img', 'assets/Big_Boy.png');
     this.load.image('powerup_bigboom_img', 'assets/Big_Boom.png');
     this.load.image('powerup_heal_img', 'assets/Heal.png');
@@ -529,6 +532,8 @@ class BootScene extends Phaser.Scene {
           { img: 'enemy_img', name: 'Estrella', desc: 'Enemigo básico. 1 de vida, resta 10 puntos. Gira y avanza hacia ti.' },
           { img: 'enemy_variant_img', name: 'Estrella naranja', desc: 'Variante fuerte: 3 de vida, resta 20 puntos. Más grande y rápida.' },
           { img: 'enemy3_img', name: 'Estrella dimensional', desc: 'Desde la fase 2. 2 vidas. Dispara meteoritos que te persiguen.' },
+          { img: 'enemy4_img', name: 'Estrella fracturada', desc: 'Desde la fase 3. 5 vidas. Al quedarse con 3 de vida se duplica en un clon verde-azulado (2 vidas).' },
+          { img: 'enemy4_img2', name: 'Clon fracturado', desc: 'Verde-azulado, 2 vidas. El original quita 10 y el clon 5, pero si matas a uno y el otro te golpea quita 15.' },
           { img: 'boss_img', name: 'BOSS', desc: 'Aparece a los 60s. 25 de vida. Te mata si cruza tu línea. Al matarlo curas +30.' },
           { img: 'final_boss1_img', name: 'BOSS FINAL', desc: 'Oleada 5. 750 de vida e inmune a balas. Golpea sus espadas normales para que se vuelvan contra él.', mult: 4 },
         ],

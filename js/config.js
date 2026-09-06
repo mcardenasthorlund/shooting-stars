@@ -1,5 +1,5 @@
 const CFG = Object.freeze({
-  VERSION: '0.8.6-prerelease',
+  VERSION: '0.9-prerelease',
   WIDTH: 800,
   HEIGHT: 600,
 
@@ -52,6 +52,23 @@ const CFG = Object.freeze({
   METEOR_SPEED: 280,                          // px/s del meteorito
   METEOR_LIFE: 1,                             // 1 de vida
 
+  // ---- ENEMIGO 4 (desde fase 3, se duplica al quedarse con 3 de vida) ----
+  ENEMY4_IMG: 'assets/enemigo4.png',          // textura del enemigo4
+  ENEMY4_IMG2: 'assets/enemigo4-2.png',       // textura al quedar con 3 de vida (se duplica)
+  ENEMY4_SIZE: 50,                            // tamaño del original
+  ENEMY4_CLONE_SIZE: 42,                      // tamaño del clon (algo más pequeño)
+  ENEMY4_LIFE: 5,                             // vida del original
+  ENEMY4_DUPLICATE_LIFE: 3,                   // al quedar con 3 de vida cambia de sprite y se duplica
+  ENEMY4_START_WAVE: 3,                       // aparece desde la fase 3
+  ENEMY4_SPEED: 42,                           // px/s hacia el player
+  ENEMY4_CLONE_LIFE: 2,                       // vida del clon (verde-azulado)
+  ENEMY4_CLONE_COLOR: 0x2fe0b0,               // tinte verde-azulado del clon
+  ENEMY4_DAMAGE: 10,                          // puntos de vida que quita el original al cruzar la línea
+  ENEMY4_CLONE_DAMAGE: 5,                     // puntos de vida que quita el clon
+  ENEMY4_VENGEANCE_DAMAGE: 15,                // daño si matas a uno y el otro te golpea
+  POINTS_PER_ENEMY4: 3,
+  POINTS_PER_ENEMY4_CLONE: 2,
+
   // ---- BOSS ----
   BOSS_TIME: 60000,             // ms tras el cual aparece el BOSS
   BOSS_LIFE: 25,                // disparos que aguanta
@@ -94,7 +111,7 @@ const CFG = Object.freeze({
   FINAL_SPECIAL_COUNT: 10,      // nº de espadas fantasma del ataque especial
 
   // ---- Puntos ----
-  POINTS_PER_FINAL_BOSS: 10,    // puntos al derrotar al boss final
+  POINTS_PER_FINAL_BOSS: 500,   // puntos al derrotar al boss final
   POINTS_PER_ENEMY: 1,
   POINTS_PER_VARIANT: 3,
   POINTS_PER_BOSS: 10,
@@ -106,10 +123,10 @@ const CFG = Object.freeze({
 
   // ---- Dificultad ----
   DIFFICULTIES: Object.freeze({
-    FACIL:   { label: 'FÁCIL',   mult: 0.75, color: 0x39ff6e },
-    MEDIO:   { label: 'MEDIO',   mult: 1.0,  color: 0xffd93b },
-    DIFICIL: { label: 'DIFÍCIL', mult: 1.4,  color: 0xff8b39 },
-    EXTREMO: { label: 'EXTREMO', mult: 1.8,  color: 0xff3b3b },
+    FACIL:   { label: 'FÁCIL',   mult: 0.75, color: 0x39ff6e, bossLifeInc: 10 },
+    MEDIO:   { label: 'MEDIO',   mult: 1.0,  color: 0xffd93b, bossLifeInc: 15 },
+    DIFICIL: { label: 'DIFÍCIL', mult: 1.4,  color: 0xff8b39, bossLifeInc: 20 },
+    EXTREMO: { label: 'EXTREMO', mult: 1.8,  color: 0xff3b3b, bossLifeInc: 25 },
   }),
 
   // ---- POWER UP ----

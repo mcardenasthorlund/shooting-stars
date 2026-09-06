@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.8.6-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v0.9-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -40,8 +40,9 @@ En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** 
   - **Enemigo básico:** 1 punto.
   - **Enemigo variante naranja** (más resistente): 3 puntos.
   - **Enemigo ENEMY3** (a partir de la fase 2): tiene 2 vidas y dispara **meteoritos aimbot** que vuelan en línea recta hacia ti cada 4 segundos. Cada meteorito tiene 1 de vida. En dificultad alta se limita su número (máx. 3 simultáneos).
-  - **BOSS:** 10 puntos, aparece a los 60 segundos (o en cada fase). Si llega a tu línea defensiva, **te mata al instante**.
-  - **BOSS FINAL** (oleada 5): aparece desde la derecha (slide-in) ocupando todo el alto, con **750 de vida**. Es **inmune a tus balas**; solo le dañan las **espadas devueltas** (50 por impacto). Lanza **espadas fantasma** (azul-verdosas, se destruyen con 1 bala), **espadas rojas de 2 vidas**, una **espada normal cada 10s** que al tocarla **vuelve contra el boss**, y un **ataque especial de 10 fantasmas** horizontales cada 20s. Las espadas rebotan en las paredes y salen en cualquier ángulo; al cruzar tu línea te quitan vida (20 normales / 10 fantasmas). Al aparecer, una explosión elimina a todos los enemigos y (salvo en EXTREMO) **te confisca las armas**: solo puedes usar el BLASTER.
+  - **Enemigo ENEMY4** (a partir de la fase 3): tiene **5 vidas** y **no gira**. Al quedarse con **3 vidas** cambia de aspecto y **se duplica** en un **clon verde-azulado** de **2 vidas**. El original te quita **10 de vida** al cruzar tu línea, el clon **5**, pero si **matas a uno** de la pareja el otro se enfurece y te quita **15**.
+  - **BOSS:** 10 puntos, aparece a los 60 segundos (o en cada fase). Si llega a tu línea defensiva, **te mata al instante**. Su vida **crece con cada oleada según la dificultad**: FÁCIL +10, MEDIO +15, DIFÍCIL +20 y EXTREMO +25 de vida por oleada.
+  - **BOSS FINAL** (oleada 5): aparece desde la derecha (slide-in) ocupando todo el alto, con **750 de vida**. Es **inmune a tus balas**; solo le dañan las **espadas devueltas** (50 por impacto). Lanza **espadas fantasma** (azul-verdosas, se destruyen con 1 bala), **espadas rojas de 2 vidas**, una **espada normal cada 10s** que al tocarla **vuelve contra el boss**, y un **ataque especial de 10 fantasmas** horizontales cada 20s. Las espadas rebotan en las paredes y salen en cualquier ángulo; al cruzar tu línea te quitan vida (20 normales / 10 fantasmas). Al aparecer, una explosión elimina a todos los enemigos y (salvo en EXTREMO) **te confisca las armas**: solo puedes usar el BLASTER. **Derrotarlo te otorga 500 puntos.**
 - **Daño:** si un enemigo cruza tu línea defensiva, pierdes **−10 % de vida**. Si es el **BOSS**, mueres directamente.
 - **Vida:** empiezas con **100**. La partida acaba cuando llegas a **0**.
 - **Power ups** (coge las estrellas que caen con tus balas y guárdalas en el inventario de 3 casillas):
@@ -90,6 +91,10 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 - [✨ **Enemigo básico**](assets/estrella.png) — la estrella que gira y se acerca.
 - [🌠 **Enemigo variante**](assets/estrella2.png) — la estrella naranja, más resistente.
 - [💥 **ENEMY3**](assets/enemigo3.png) — enemigo de fase 2+ que dispara meteoritos aimbot. Su proyectil es [☄️ `enemigo3-disparo.png`](assets/enemigo3-disparo.png).
+- [💥 **ENEMY4**](assets/enemigo4.png) — enemigo de fase 3+, 5 vidas, que se duplica al quedarse con 3. Su forma duplicada es [💥 `enemigo4-2.png`](assets/enemigo4-2.png) (y el **clon verde-azulado** del mismo sprite).
+
+### Avisos
+- [⚠️ **WARNING boss final**](assets/warning-final-boss.png) — aviso que aparece al entrar en la oleada 5.
 
 ---
 
@@ -168,7 +173,7 @@ SHOOTING STARS/
 
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
-En él se registran las **84 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+En él se registran las **87 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
@@ -179,6 +184,8 @@ La versión **v0.8-prerelease** añadió el **BOSS FINAL** de la **oleada 5**: a
 La versión **v0.8.1-prerelease** corrige un bug de dificultad del **BOSS FINAL**: antes su ritmo y la velocidad de sus espadas escalaban con la dificultad **acumulada por oleadas** (+0.25 por fase), por lo que en niveles bajos (p. ej. FÁCIL) llegaba a la oleada 5 con una dificultad casi de EXTREMO. Ahora el boss final escala con la **dificultad base seleccionada** al empezar la partida, de forma acorde al nivel elegido.
 
 La versión **v0.8.6-prerelease** es la versión actual del juego. Rediseña la **pantalla INFO**: ahora se organiza en **pestañas** (ENEMIGOS / POWER UPS / ARMAS) y el contenido de cada una se muestra en **3 columnas**, con textos más grandes y una descripción revisada de cada enemigo (por ejemplo, el **Enemy3** pasa a llamarse **"Estrella dimensional"** y el **BOSS FINAL** se muestra 4× más grande). También se pule la **pantalla de inicio**: un texto introductorio épico (*"Tú eres el último piloto que queda en pie..."*), una indicación de controles en letra pequeña, el botón INFO a la izquierda alineado con CREDITOS, y el **logo del juego** en la pantalla de giro del móvil.
+
+La versión **v0.9-prerelease** añade el nuevo enemigo **ENEMY4** (fase 3+): **5 vidas**, no gira y, al quedarse con **3 vidas**, cambia de aspecto y se **duplica** en un **clon verde-azulado** de **2 vidas**. El original quita **10 de vida** y el clon **5**, pero si eliminas a uno de la pareja el otro se enfurece y quita **15**. Además, la **vida del BOSS** ahora **crece con cada oleada según la dificultad** (FÁCIL +10, MEDIO +15, DIFÍCIL +20 y EXTREMO +25 por oleada) y, al **CONTINUAR** tras el boss final en una dificultad superior, **se resetea a la vida inicial** para no arrastrar el incremento. Por último, la **pantalla WARNING** del boss final ahora muestra el nuevo sprite **`warning-final-boss.png`** en lugar del texto y la calavera anteriores, y **derrotar al boss final otorga 500 puntos**.
 
 ## Historial de incidencias
 

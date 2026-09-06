@@ -89,6 +89,11 @@
 | 83 | **INFO con pestañas**: la ventana de información pasa a un sistema de **tabs** (ENEMIGOS / POWER UPS / ARMAS) con el contenido de cada sección organizado en **3 columnas**; ajustes de texto, tamaños e iconos (BOSS FINAL 4x) | ✅ |
 | 84 | Pantalla de inicio pulida: texto introductorio épico ("Tú eres el último piloto...") + indicación de controles en letra pequeña; botón INFO a la izquierda, alineado con CREDITOS; overlay de rotación con el **logo del juego** | ✅ |
 | — | Versión actualizada a **0.8.6-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 85 | Nuevo enemigo **ENEMY4** (fase 3+): 5 de vida, al quedarse con 3 cambia a `enemigo4-2.png` y se **duplica** en un clon verde-azulado de 2 vidas; el original quita 10 de vida, el clon 5, pero si eliminas a uno y el otro te golpea quita 15; no gira | ✅ |
+| 86 | Vida del **BOSS** crece por oleada según la dificultad (FÁCIL +10, MEDIO +15, DIFÍCIL +20, EXTREMO +25); al CONTINUAR tras el boss final se resetea a la vida inicial | ✅ |
+| 87 | Pantalla **WARNING** del boss final usa el sprite `warning-final-boss.png` (sustituye al texto WARNING y a la calavera procedural) | ✅ |
+| 88 | Matar al **BOSS FINAL** otorga **500 puntos** (`POINTS_PER_FINAL_BOSS`) | ✅ |
+| — | Versión actualizada a **0.9-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -111,6 +116,7 @@ SHOOTING STARS/
     │   ├── Bullet.js
     │   ├── Enemy.js         # enemigo + variantes
     │   ├── Enemy3.js        # enemigo de fase 2+ que dispara meteoritos aimbot
+    │   ├── Enemy4.js        # enemigo de fase 3+ que se duplica en un clon al quedar con 3 vidas
     │   ├── Boss.js          # jefe (10 pts, 60s)
     │   ├── FinalBoss.js     # BOSS FINAL de la oleada 5 (estático + espadas/fantasmas)
     │   ├── Explosion.js     # explosión al matar enemigos/BOSS
@@ -662,3 +668,35 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 ## Verificación
 - `node --check` de todos los archivos JS modificados: OK (`config.js`, `FinalBoss.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`, `ScoreSystem.js`).
 - Prueba en navegador pendiente: oleada 5, espadas/rebotes, devolución de espadas al boss, ataque especial 20s, CONTINUAR/TERMINAR, May+C.
+
+## Sesión actual (ENEMY4, vida del BOSS por dificultad y WARNING con sprite) — v0.9-prerelease
+
+### 85. Nuevo enemigo ENEMY4 (desde la oleada 3) ✅
+- **Nuevo `js/objects/Enemy4.js`** (registrado en `index.html`): clases `Enemy4` y `Enemy4Clone`.
+  - **`Enemy4`** (original): usa `assets/enemigo4.png` (`ENEMY4_IMG`, 50px), **5 de vida** (`ENEMY4_LIFE`), se acerca con leve oscilación y **no gira**. Al quedarse con **3 de vida** (`ENEMY4_DUPLICATE_LIFE`) cambia a `assets/enemigo4-2.png` y se **duplica** (sale un clon suyo). El clon se crea en un `delayedCall(0)` para no modificar el grupo de físicas en mitad del callback de overlap.
+  - **`Enemy4Clone`** (clon): usa `assets/enemigo4-2.png` teñido de **verde-azulado** (`ENEMY4_CLONE_COLOR` 0x2fe0b0), **2 de vida** (`ENEMY4_CLONE_LIFE`), tamaño 42px, tampoco gira.
+- **Daño al cruzar la línea**: el original quita **10** de vida (`ENEMY4_DAMAGE`), el clon **5** (`ENEMY4_CLONE_DAMAGE`). Si **matas a uno** de la pareja, el otro se enfurece y pasa a quitar **15** (`ENEMY4_VENGEANCE_DAMAGE`) — al morir el original avisa a su clon (`clone.damageOnHit = 15`) y viceversa (`original.damageOnHit = 15`).
+- `config.js`: constantes `ENEMY4_*`, `ENEMY4_CLONE_*`, `ENEMY4_DAMAGE/CLONE_DAMAGE/VENGEANCE_DAMAGE` y puntos (`POINTS_PER_ENEMY4: 3`, `POINTS_PER_ENEMY4_CLONE: 2`).
+- `BootScene.preload()` carga `enemy4_img` y `enemy4_img2`; la pantalla **INFO** incluye el enemigo y su clon.
+- `EnemySpawner.spawnEnemy()`: 20% de probabilidad de spawnar un `Enemy4` cuando `wave >= ENEMY4_START_WAVE` (3). El clon se integra en el grupo de enemigos (overlap, daño y cruce de línea).
+- `EnemySpawner.updateAll()`: el daño por cruce de línea usa `handler.damageOnHit` si el enemigo lo define (Enemy4/clon: 10/5/15); el resto conserva el -10% genérico.
+
+### 86. Vida del BOSS creciente por oleada según la dificultad ✅
+- `config.js`: cada dificultad de `CFG.DIFFICULTIES` gana `bossLifeInc` (FÁCIL 10 / MEDIO 15 / DIFÍCIL 20 / EXTREMO 25).
+- `GameScene.getBossLifeInc()`: resuelve el incremento según la dificultad **seleccionada** (`selectedDifficulty`), no la acumulada por oleadas.
+- `EnemySpawner.spawnBoss()`: la vida del BOSS es `CFG.BOSS_LIFE (25) + bossLifeInc * (wave - 1)`.
+- `Boss.js`: el constructor acepta una `life` inicial opcional y `damage()` emite `boss-hurt` con `(life, maxLife)`.
+- `UIScene`: la barra del BOSS usa la vida real del jefe (máx. dinámico) en lugar del 25 fijo.
+- **Reset al CONTINUAR**: al matar al boss final y continuar, `continueHigherDifficulty()` sube la dificultad y reinicia `wave = 1`; como la vida se calcula siempre como `base + inc*(wave-1)`, el BOSS vuelve a su vida inicial (25) sin arrastrar el incremento.
+
+### 87. Pantalla WARNING del boss final con sprite ✅
+- `BootScene.preload()` carga `assets/warning-final-boss.png` (`warning_final_boss_img`).
+- `GameScene.showFinalBossWarning()`: se **eliminan** el texto "⚠ WARNING ⚠" y la **calavera procedural**; en su lugar se muestra el sprite `warning-final-boss.png` (centrado arriba, escalado a 120px máx. de alto) con la misma animación de parpadeo. Se conservan el flash rojo, el texto de armas confiscadas y el borde de sirena.
+
+### 88. BOSS FINAL otorga 500 puntos ✅
+- `config.js`: `POINTS_PER_FINAL_BOSS` de 10 → **500**, por lo que al derrotar al boss final se suman 500 puntos (se aplica en `GameScene.onFinalBossKilled()`).
+
+### Versión 0.9-prerelease ✅
+- `CFG.VERSION` → `0.9-prerelease` (config.js) y `VERSION` en `sw.js` → `0.9-prerelease` (bumpear para que el service worker detecte la actualización y muestre el aviso).
+- `node --check` de los archivos modificados: OK (`config.js`, `Enemy4.js`, `Boss.js`, `EnemySpawner.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`).
+- Prueba en navegador pendiente: oleada 3 (ENEMY4 y su duplicación/venganza), vida del BOSS por dificultad en cada oleada, CONTINUAR tras el boss final (vida del BOSS reseteada y +500 puntos), y el nuevo WARNING del boss final.

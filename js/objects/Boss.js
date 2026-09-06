@@ -1,5 +1,5 @@
 class Boss {
-  constructor(scene, x, y) {
+  constructor(scene, x, y, life = CFG.BOSS_LIFE) {
     this.scene = scene;
     this.points = CFG.POINTS_PER_BOSS;
 
@@ -9,8 +9,8 @@ class Boss {
     this.sprite.setDisplaySize(size, size);
     this.sprite.body.setSize(size, size, true);
 
-    this.maxLife = CFG.BOSS_LIFE;
-    this.life = CFG.BOSS_LIFE;
+    this.maxLife = life;
+    this.life = life;
     this.speedX = 30;
     this.amp = 90;
     this.freq = 0.9;
@@ -58,7 +58,7 @@ class Boss {
 
   damage(amount) {
     this.life -= amount;
-    this.scene.events.emit('boss-hurt', this.life);
+    this.scene.events.emit('boss-hurt', this.life, this.maxLife);
     if (this.life <= 0) {
       this.stopPhaseSwap();
       this.sprite.destroy();

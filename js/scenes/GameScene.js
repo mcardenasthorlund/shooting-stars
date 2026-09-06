@@ -488,46 +488,20 @@ class GameScene extends Phaser.Scene {
       onComplete: () => flash.destroy(),
     });
 
-    // textura procedural de la calavera
-    if (!this.textures.exists('skull_img')) {
-      const g = this.make.graphics({ x: 0, y: 0 }, false);
-      g.fillStyle(0xf0f0f0, 1);
-      g.fillRoundedRect(8, 10, 32, 26, 6);
-      g.fillStyle(0x05070f, 1);
-      g.fillRect(13, 16, 8, 9);
-      g.fillRect(27, 16, 8, 9);
-      g.fillTriangle(22, 22, 26, 22, 24, 27);
-      g.fillStyle(0x05070f, 1);
-      g.fillRect(18, 30, 4, 5);
-      g.fillRect(23, 30, 4, 5);
-      g.fillRect(28, 30, 4, 5);
-      g.generateTexture('skull_img', 48, 48);
-      g.destroy();
-    }
-
-    const skull = this.add.image(W / 2, H / 2 - 90, 'skull_img').setScale(1.4).setAlpha(0);
+    // textura del aviso del boss final (sustituye al texto WARNING y la calavera)
+    const src = this.textures.get('warning_final_boss_img').getSourceImage();
+    const maxW = W - 60;
+    const maxH = 120;
+    const scale = Math.min(maxW / src.width, maxH / src.height);
+    const warningImg = this.add.image(W / 2, H / 2 - 120, 'warning_final_boss_img')
+      .setScale(scale).setAlpha(0);
     this.tweens.add({
-      targets: skull,
+      targets: warningImg,
       alpha: { from: 0, to: 1 },
       duration: 120,
       yoyo: true,
       repeat: 7,
-      onComplete: () => skull.destroy(),
-    });
-
-    const alert = this.add.text(W / 2, H / 2 - 160, '⚠ WARNING ⚠', {
-      fontFamily: 'monospace',
-      fontSize: '44px',
-      color: '#ff2b2b',
-      fontStyle: 'bold',
-    }).setOrigin(0.5, 0.5).setAlpha(0);
-    this.tweens.add({
-      targets: alert,
-      alpha: { from: 0, to: 1 },
-      duration: 120,
-      yoyo: true,
-      repeat: 7,
-      onComplete: () => alert.destroy(),
+      onComplete: () => warningImg.destroy(),
     });
 
     // en EXTREMO no se muestra el mensaje de confiscación de armas
@@ -967,6 +941,16 @@ class GameScene extends Phaser.Scene {
 
   getWeapon() {
     return CFG.WEAPONS[this.player.weapon] || CFG.WEAPONS[CFG.DEFAULT_WEAPON];
+  }
+
+  // incremento de vida del BOSS por oleada según la dificultad seleccionada
+  // (FÁCIL +10, MEDIO +15, DIFÍCIL +20, EXTREMO +25)
+  getBossLifeInc() {
+    const sel = this.game.selectedDifficulty || 1;
+    for (const d of Object.values(CFG.DIFFICULTIES)) {
+      if (Math.abs(d.mult - sel) < 0.0001) return d.bossLifeInc;
+    }
+    return 10;
   }
 
   // pausa la partida y muestra el menú de victoria del BOSS (con la tienda)

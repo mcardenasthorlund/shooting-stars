@@ -31,7 +31,12 @@ class EnemySpawner {
     if (this.bossActive || this.bossSpawned) return;
     this.bossSpawned = true;
     this.bossActive = true;
-    this.boss = new Boss(this.scene, CFG.WIDTH + 60, CFG.HEIGHT / 2);
+    // la vida del BOSS crece con cada oleada según la dificultad seleccionada.
+    // La base es CFG.BOSS_LIFE (25); al comenzar una partida nueva (wave=1) se
+    // vuelve al valor inicial, por lo que CONTINUAR no arrastra el incremento.
+    const inc = this.scene.getBossLifeInc ? this.scene.getBossLifeInc() : 0;
+    const bossLife = CFG.BOSS_LIFE + inc * (this.scene.wave - 1);
+    this.boss = new Boss(this.scene, CFG.WIDTH + 60, CFG.HEIGHT / 2, bossLife);
     this.enemies.add(this.boss.sprite);
     this.boss.sprite.setData('handler', this.boss);
     this.scene.events.emit('boss-spawned');
@@ -56,6 +61,16 @@ class EnemySpawner {
         const enemy = new Enemy3(this.scene, CFG.WIDTH + 30, y);
         this.enemies.add(enemy.sprite);
         enemy.sprite.setData('handler', enemy);
+        return;
+      }
+    }
+    // enemigo4 desde la fase 3 (original que se duplica al quedarse con 3 de vida)
+    if (!variant && this.scene.wave >= CFG.ENEMY4_START_WAVE) {
+      const chance4 = Phaser.Math.Clamp(0.2 / (this.scene.difficulty || 1), 0, 0.2);
+      if (Math.random() < chance4) {
+        const enemy4 = new Enemy4(this.scene, CFG.WIDTH + 30, y);
+        this.enemies.add(enemy4.sprite);
+        enemy4.sprite.setData('handler', enemy4);
         return;
       }
     }
@@ -97,7 +112,12 @@ class EnemySpawner {
             this.scene.endGame();
           }
         } else {
-          this.scene.player.damage((CFG.MAX_HEALTH * CFG.CONTACT_DAMAGE_PERCENT) / 100);
+          // daño al cruzar la línea: por defecto -10% de la vida total, salvo que el
+          // enemigo defina su propio daño (Enemy4 y su clon: 10 / 5 / 15 con venganza)
+          const dmg = (h && h.damageOnHit)
+            ? h.damageOnHit
+            : (CFG.MAX_HEALTH * CFG.CONTACT_DAMAGE_PERCENT) / 100;
+          this.scene.player.damage(dmg);
           this.scene.events.emit('player-hurt', this.scene.player.health);
           if (this.scene.game.sfx) this.scene.game.sfx.damage();
           this.scene.spawnShieldExplosion(s.x, s.y);
