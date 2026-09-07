@@ -1,6 +1,9 @@
 # Clave de firma y credenciales (no versionar)
 keystores/
 
+# Recursos de Google Play (no versionar)
+playstore/
+
 # Proyecto Android generado por Bubblewrap
 twa/
 twa-manifest.json
