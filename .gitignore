@@ -1,0 +1,8 @@
+# Clave de firma y credenciales (no versionar)
+keystores/
+
+# Proyecto Android generado por Bubblewrap
+twa/
+twa-manifest.json
+manifest-checksum.txt
+plan-app.md
