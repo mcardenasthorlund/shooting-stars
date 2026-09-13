@@ -75,6 +75,33 @@ class UIScene extends Phaser.Scene {
     }).setOrigin(0, 0.5);
     this.ammoText.setVisible(false);
 
+    // ---- Botón de cambio de arma (abajo, a la derecha del inventario) ----
+    this.weaponSwitchBtn = this.add.container(340, H - 30);
+    const wsRect = this.add.rectangle(0, 0, 150, 34, 0x1a2340, 1).setStrokeStyle(1, 0x4dd4ff, 1);
+    const wsText = this.add.text(0, 0, 'CAMBIAR ARMA', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#c8d2ea',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    this.weaponSwitchBtn.add([wsRect, wsText]);
+    this.weaponSwitchBtn.setSize(150, 34);
+    this.weaponSwitchBtn.setInteractive({ useHandCursor: true });
+    this.weaponSwitchBtn.on('pointerover', () => {
+      wsRect.setFillStyle(0x2a3a5a, 1);
+      wsText.setColor('#ffffff');
+    });
+    this.weaponSwitchBtn.on('pointerout', () => {
+      wsRect.setFillStyle(0x1a2340, 1);
+      wsText.setColor('#c8d2ea');
+    });
+    this.weaponSwitchBtn.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      if (this.game.sfx) this.game.sfx.click();
+      this.openWeaponSwitch();
+    });
+    this.weaponSwitchBtn.setVisible(false);
+
     // ---- Contador de puntos (abajo a la derecha) ----
     this.scoreText = this.add.text(W - 20, H - 40, 'PUNTOS: 0', {
       fontFamily: 'monospace',
@@ -298,6 +325,14 @@ class UIScene extends Phaser.Scene {
     } else {
       this.grenadeText.setVisible(false);
     }
+
+    // muestra el botón de cambio de arma solo si hay más de una arma comprada
+    const owned = this.game.ownedWeapons || [CFG.DEFAULT_WEAPON];
+    if (owned.length > 1) {
+      this.weaponSwitchBtn.setVisible(!this.weaponWin);
+    } else {
+      this.weaponSwitchBtn.setVisible(false);
+    }
   }
 
   showGameOver(score) {
@@ -373,5 +408,134 @@ class UIScene extends Phaser.Scene {
     this.scene.stop('UIScene');
     this.scene.stop('GameScene');
     this.scene.start('BootScene');
+  }
+
+  // abre la ventana de cambio de arma: pausa la partida y muestra las armas
+  // compradas en cajas para poder equipar una
+  openWeaponSwitch() {
+    if (this.weaponWin) return;
+    const game = this.scene.get('GameScene');
+    if (!game) return;
+    const W = CFG.WIDTH, H = CFG.HEIGHT;
+
+    // pausa el juego y bloquea el disparo mientras la ventana está abierta
+    game.setUILocked(true);
+    game.scene.pause();
+
+    this.weaponWin = this.add.container(0, 0);
+    this.weaponWin.setDepth(50);
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.8).setInteractive();
+    const winW = 700, winH = 300;
+    const winBg = this.add.rectangle(W / 2, H / 2, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0x4dd4ff, 1);
+    const title = this.add.text(W / 2, H / 2 - winH / 2 + 28, 'CAMBIAR ARMA', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+
+    const owned = this.game.ownedWeapons || [CFG.DEFAULT_WEAPON];
+    const sorted = owned.slice().sort((a, b) => CFG.WEAPONS[a].cost - CFG.WEAPONS[b].cost);
+    const current = this.game.equippedWeapon || CFG.DEFAULT_WEAPON;
+
+    const boxW = 110, boxH = 130, gap = 24;
+    const totalW = sorted.length * boxW + (sorted.length - 1) * gap;
+    const startX = W / 2 - totalW / 2 + boxW / 2;
+    const y = H / 2 + 10;
+
+    this.weaponWin.add([overlay, winBg, title]);
+
+    sorted.forEach((key, i) => {
+      const w = CFG.WEAPONS[key];
+      const x = startX + i * (boxW + gap);
+      const box = this.add.container(x, y);
+      const rect = this.add.rectangle(0, 0, boxW, boxH, 0x1a2340, 1)
+        .setStrokeStyle(2, key === current ? 0x39ff6e : 0x4a6a9a, 1)
+        .setInteractive({ useHandCursor: true });
+
+      let icon = null;
+      if (w.img && this.textures.exists(w.img)) {
+        const src = this.textures.get(w.img).getSourceImage();
+        const maxW = boxW - 16, maxH = boxH - 55;
+        const scale = Math.min(maxW / src.width, maxH / src.height);
+        icon = this.add.image(0, -18, w.img).setScale(scale);
+      }
+
+      const label = this.add.text(0, 42, w.label, {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#ffd93b',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: boxW - 8 },
+      }).setOrigin(0.5, 0.5);
+
+      let equipTag = null;
+      if (key === current) {
+        equipTag = this.add.text(0, 58, 'EQUIPADA', {
+          fontFamily: 'monospace',
+          fontSize: '10px',
+          color: '#39ff6e',
+          fontStyle: 'bold',
+        }).setOrigin(0.5, 0.5);
+      }
+
+      box.add([rect, icon, label, equipTag].filter(Boolean));
+      box.setSize(boxW, boxH);
+      rect.on('pointerover', () => rect.setFillStyle(0x2a3a5a, 1));
+      rect.on('pointerout', () => rect.setFillStyle(0x1a2340, 1));
+      rect.on('pointerdown', (pointer, lx, ly, event) => {
+        event.stopPropagation();
+        if (this.game.sfx) this.game.sfx.click();
+        this.doWeaponSwitch(key);
+      });
+      this.weaponWin.add(box);
+    });
+
+    const closeBtn = this.add.container(W / 2, H / 2 + winH / 2 - 25);
+    const closeRect = this.add.rectangle(0, 0, 140, 36, 0x1a2338, 1).setStrokeStyle(1, 0xff5a5a, 1);
+    const closeText = this.add.text(0, 0, 'CERRAR', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#c8d2ea',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    closeBtn.add([closeRect, closeText]);
+    closeBtn.setSize(140, 36);
+    closeBtn.setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerover', () => {
+      closeRect.setFillStyle(0x2a3a5a, 1);
+      closeText.setColor('#ffffff');
+    });
+    closeBtn.on('pointerout', () => {
+      closeRect.setFillStyle(0x1a2338, 1);
+      closeText.setColor('#c8d2ea');
+    });
+    closeBtn.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      if (this.game.sfx) this.game.sfx.click();
+      this.closeWeaponSwitch();
+    });
+    this.weaponWin.add(closeBtn);
+  }
+
+  // equipa el arma seleccionada y cierra la ventana
+  doWeaponSwitch(key) {
+    const game = this.scene.get('GameScene');
+    if (game) game.equipWeapon(key);
+    this.closeWeaponSwitch();
+  }
+
+  // cierra la ventana, reanuda la partida y desbloquea el disparo
+  closeWeaponSwitch() {
+    if (!this.weaponWin) return;
+    this.weaponWin.destroy();
+    this.weaponWin = null;
+    const game = this.scene.get('GameScene');
+    if (game) {
+      game.setUILocked(false);
+      if (game.scene.isPaused()) game.scene.resume();
+    }
   }
 }

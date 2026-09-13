@@ -44,7 +44,10 @@ class ShopScene extends Phaser.Scene {
   makeButton(container, x, y, w, h, label, color, callback) {
     const btn = this.add.container(x, y);
     const rect = this.add.rectangle(0, 0, w, h, color).setInteractive({ useHandCursor: true });
-    rect.on('pointerdown', callback);
+    rect.on('pointerdown', (pointer, localX, localY, event) => {
+      if (this.game.sfx) this.game.sfx.click();
+      callback();
+    });
     rect.on('pointerover', () => rect.setFillStyle(color, 0.7));
     rect.on('pointerout', () => rect.setFillStyle(color, 1));
     const txt = this.add.text(0, 0, label, {
@@ -85,6 +88,28 @@ class ShopScene extends Phaser.Scene {
   showMenu() {
     this.menu.setVisible(true);
     this.shop.setVisible(false);
+    this.stopShopMusic();
+  }
+
+  // suena la música de la tienda al entrar y pausa la música de la partida
+  startShopMusic() {
+    if (this.game.music && this.game.music.isPlaying) this.game.music.pause();
+    if (this.game.bossMusic && this.game.bossMusic.isPlaying) this.game.bossMusic.pause();
+    if (this.game.finalBossMusic && this.game.finalBossMusic.isPlaying) this.game.finalBossMusic.pause();
+    if (!this.game.tiendaMusic) {
+      this.game.tiendaMusic = this.sound.add('tienda_music', { loop: true, volume: 0.5 });
+    }
+    if (!this.game.tiendaMusic.isPlaying) this.game.tiendaMusic.play();
+  }
+
+  // detiene la música de la tienda al salir y reanuda la música de la partida
+  stopShopMusic() {
+    if (this.game.tiendaMusic && this.game.tiendaMusic.isPlaying) this.game.tiendaMusic.stop();
+    const game = this.gameScene;
+    if (game && game.game.music && !game.game.music.isPlaying) {
+      game.game.music.resume();
+      game.game.music.setVolume(0.5);
+    }
   }
 
   // ---- Tienda a pantalla completa ----
@@ -304,6 +329,7 @@ class ShopScene extends Phaser.Scene {
   showShop() {
     this.shop.setVisible(true);
     this.menu.setVisible(false);
+    this.startShopMusic();
     this.updatePoints();
     this.updateEquip();
     this.updateTicks();
@@ -396,6 +422,7 @@ class ShopScene extends Phaser.Scene {
     if (game.player.setWeapon) game.player.setWeapon(key);
     else game.player.weapon = key;
     if (game.reloadWeapon) game.reloadWeapon();
+    game.bazookaReady = true;
     this.game.equippedWeapon = key;
     this.updateEquip();
   }
@@ -414,6 +441,7 @@ class ShopScene extends Phaser.Scene {
   }
 
   continueGame() {
+    if (this.game.tiendaMusic && this.game.tiendaMusic.isPlaying) this.game.tiendaMusic.stop();
     this.scene.stop('ShopScene');
     const game = this.scene.get('GameScene');
     if (game) {
@@ -429,6 +457,7 @@ class ShopScene extends Phaser.Scene {
   }
 
   surrender() {
+    if (this.game.tiendaMusic && this.game.tiendaMusic.isPlaying) this.game.tiendaMusic.stop();
     const game = this.scene.get('GameScene');
     if (game) this.game.records.submit(game.scoreSystem.score);
     if (this.game.music && this.game.music.isPlaying) this.game.music.stop();
