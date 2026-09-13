@@ -53,7 +53,8 @@ En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** 
   - ⏸ **TIMESTOP** — congela a los enemigos 5s: pantalla grisácea + cuenta atrás. También congela las espadas del boss final.
   - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla. Las granadas también **recogen los power ups** que tocan, tanto al impactar como con su explosión, y **dañan a las espadas** del boss final.
   - 🕳️ **BLACK HOLE** — abre un **agujero negro** en la mitad derecha de la pantalla que **atrae a todos los enemigos** desde cualquier distancia y los **atrapa orbitando** a su alrededor sin que puedan escapar, durante **10s** (con cuenta atrás). También atrae los meteoritos y las espadas del boss final.
-- **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, SHOTGUN, UZI) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
+- **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, DOUBLE GUN, SHOTGUN, UZI, BAZOOKA) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
+- **Cambio de arma en partida:** durante la partida, el botón **"CAMBIAR ARMA"** (abajo, junto al inventario) abre una ventana que pausa el juego y muestra las armas compradas en cajas para equipar la que quieras al instante.
 - **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta. El juego tiene **5 oleadas**; en la **quinta** aparece el **BOSS FINAL**. Al derrotarlo ves **"VENGANZA CUMPLIDA"** y puedes **CONTINUAR** (reinicia en una dificultad superior manteniendo la puntuación) o **TERMINAR** (vuelve al menú).
 - **Dificultad:** al comenzar cada partida eliges el nivel (**FÁCIL**, **MEDIO**, **DIFÍCIL** o **EXTREMO**). A más dificultad, los enemigos son **más rápidos** y **aparecen más** (además de la progresión por fases), y el boss final lanza **más espadas y más rápidas**. El nivel se muestra bajo el indicador de fase. En **EXTREMO** el boss final **no te confisca las armas**.
@@ -78,8 +79,10 @@ Todo el arte está dibujado por Manuel con **Procreate** e integrado en el juego
 ### Armas
 - [🚀 **BLASTER**](assets/logo.png) — el arma inicial, siempre disponible (usa la nave del jugador).
 - [🔫 **REVOLVER**](assets/Revolver.png) — daño 3, cadencia 0.3s, 6 balas con recarga de 1.5s, 60 pts.
-- [🔫 **SHOTGUN**](assets/Shotgun.png) — 3 balas en abanico (±10°), daño 2, cadencia 0.8s, 200 pts.
+- [🔫 **DOUBLE GUN**](assets/doble-disparo.png) — dos balas paralelas alternando arriba y abajo, daño 0.5, cadencia 0.15s, 200 pts.
+- [🔫 **SHOTGUN**](assets/Shotgun.png) — 3 balas en abanico (±10°), daño 2, cadencia 0.8s, 350 pts.
 - [🔫 **UZI**](assets/Uzi.png) — ráfaga rápida de bajo daño, 500 pts.
+- [🚀 **BAZOOKA**](assets/bazooka-1.png) — bala perforante (5 de daño) + explosiones en cadena a lo largo de la línea (3 de daño), cadencia 2s, 450 pts. Sprites: [idle](assets/bazooka-1.png) / [disparo](assets/bazooka-2.png) / [bala](assets/bazooka-bala.png).
 
 ### Fondo
 - [🪐 **Planeta protector**](assets/Back_Planet.png) — planeta de fondo pegado al borde izquierdo que protege al jugador.
@@ -174,6 +177,8 @@ SHOOTING STARS/
 Todo el detalle de fases implementadas, ajustes de gameplay, la historia de bugs resueltos y las ideas futuras están documentados en el fichero **[`PLAN.md`](PLAN.md)**.
 
 En él se registran las **87 fases completadas**, desde el scaffold inicial hasta el sistema de armas y la tienda, la versión responsive/PWA, el planeta protector, los power ups (TIMESTOP, GRANADE y BLACK HOLE), el sonido (música y efectos), el **BOSS FINAL** de la oleada 5 con su secuencia de cierre, la pantalla de información del juego, así como la estructura de carpetas, la verificación de sintaxis y el **historial de incidencias** resuelto durante el desarrollo.
+
+Entre las últimas mejoras se incluyen: una **pantalla de bienvenida** con texto y botón "IR AL MENÚ" que desbloquea el audio y lanza la **música de inicio**; **efecto de sonido de clic** en los botones de la UI; la **música de la tienda**; los **créditos de música** con aviso legal; las nuevas armas **DOUBLE GUN** (disparo doble paralelo alternado) y **BAZOOKA** (bala perforante + explosiones en cadena), el nuevo precio de la **SHOTGUN (350 pts)** y el **cambio de arma en mitad de la partida** con una ventana que pausa el juego.
 
 Entre las últimas mejoras: el nuevo enemigo **ENEMY3** (fase 2+) que dispara meteoritos aimbot, el **BOSS que mata al instante** al llegar a tu línea, y el **cargador del REVOLVER** (6 balas con recarga de 1.5s y contador). También: la nueva arma **SHOTGUN**, el **sistema de armas compradas** con botón **EQUIPAR** y ticks verdes en la lista, la **tienda rediseñada**, la **victoria para todos los BOSS**, y el **temporizador de aparición** de enemigos y BOSS ligado al inicio real de la partida.
 
