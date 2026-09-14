@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v0.9-prerelease):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v1.0-final):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -20,7 +20,7 @@ Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizonta
 
 El juego está pensado para jugarse **en horizontal** (si el móvil está en vertical, te pedirá girar el dispositivo). Instalado como PWA funciona **offline** gracias a su service worker y **se actualiza solo**: cuando hay una versión nueva, la app avisa con **"NUEVA VERSIÓN DESCARGADA"**.
 
-En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** (solo cuando el navegador puede instalar el juego) para lanzar el instalador de la PWA sin entrar en los menús. Además, en el móvil el juego entra en **pantalla completa automáticamente al primer toque**, sin necesidad de pulsar ningún botón, y al pulsar **"IR AL MENÚ"** en la pantalla de bienvenida también se activa la **pantalla completa** si no lo está ya. Durante la **carga inicial** se muestra una **barra de progreso** con porcentaje en lugar de quedarse solo con el fondo.
+En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** (solo cuando el navegador puede instalar el juego) para lanzar el instalador de la PWA sin entrar en los menús. Además, en el móvil el juego entra en **pantalla completa automáticamente al primer toque**, sin necesidad de pulsar ningún botón, y al pulsar **"IR AL MENÚ"** en la pantalla de bienvenida también se activa la **pantalla completa** (en el móvil reutiliza el gesto del botón de fullscreen). Durante la **carga inicial** se muestra una **barra de progreso** con porcentaje en lugar de quedarse solo con el fondo.
 
 ---
 
@@ -54,7 +54,7 @@ En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** 
   - 💣 **GRANADE** — disparas 10 granadas parabólicas (1s entre disparos) que explotan en 1/8 de pantalla. Las granadas también **recogen los power ups** que tocan, tanto al impactar como con su explosión, y **dañan a las espadas** del boss final.
   - 🕳️ **BLACK HOLE** — abre un **agujero negro** en la mitad derecha de la pantalla que **atrae a todos los enemigos** desde cualquier distancia y los **atrapa orbitando** a su alrededor sin que puedan escapar, durante **10s** (con cuenta atrás). También atrae los meteoritos y las espadas del boss final.
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, DOUBLE GUN, SHOTGUN, UZI, BAZOOKA) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
-- **Cambio de arma en partida:** durante la partida, el botón **"CAMBIAR ARMA"** (abajo, junto al inventario) abre una ventana que pausa el juego y muestra las armas compradas en cajas para equipar la que quieras al instante.
+- **Cambio de arma en partida:** durante la partida, el botón **"CAMBIAR ARMA"** (abajo, junto al inventario) abre una ventana que pausa el juego y muestra las armas compradas en cajas para equipar la que quieras al instante. El botón solo se muestra si tienes **más de una arma comprada**, y se **oculta durante el boss final** cuando tus armas han sido **confiscadas** (salvo en EXTREMO, donde se conserva).
 - **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta. El juego tiene **5 oleadas**; en la **quinta** aparece el **BOSS FINAL**. Al derrotarlo ves **"VENGANZA CUMPLIDA"** y puedes **CONTINUAR** (reinicia en una dificultad superior manteniendo la puntuación) o **TERMINAR** (vuelve al menú).
 - **Dificultad:** al comenzar cada partida eliges el nivel (**FÁCIL**, **MEDIO**, **DIFÍCIL** o **EXTREMO**). A más dificultad, los enemigos son **más rápidos** y **aparecen más** (además de la progresión por fases), y el boss final lanza **más espadas y más rápidas**. El nivel se muestra bajo el indicador de fase. En **EXTREMO** el boss final **no te confisca las armas**.
@@ -192,7 +192,7 @@ La versión **v0.8.6-prerelease** es la versión actual del juego. Rediseña la 
 
 La versión **v0.9-prerelease** añade el nuevo enemigo **ENEMY4** (fase 3+): **5 vidas**, no gira y, al quedarse con **3 vidas**, cambia de aspecto y se **duplica** en un **clon verde-azulado** de **2 vidas** que **se lanza rápido en vertical para separarse del original** y sigue una **trayectoria propia** para no ser eliminado fácilmente. El original quita **10 de vida** y el clon **5**, pero si eliminas a uno de la pareja el otro se enfurece y quita **15**. Además, la **vida del BOSS** ahora **crece con cada oleada según la dificultad** (FÁCIL +10, MEDIO +15, DIFÍCIL +20 y EXTREMO +25 por oleada) y, al **CONTINUAR** tras el boss final en una dificultad superior, **se resetea a la vida inicial** para no arrastrar el incremento. Por último, la **pantalla WARNING** del boss final ahora muestra el nuevo sprite **`warning-final-boss.png`** en lugar del texto y la calavera anteriores, y **derrotar al boss final otorga 500 puntos**.
 
-La última sesión añadió además una **barra de progreso de carga**, la **orientación de la bala de la BAZOOKA** en la dirección de disparo, la **pantalla completa al pulsar "IR AL MENÚ"** y la **separación rápida del clon del ENEMY4** con trayectoria propia.
+La última sesión añadió además una **barra de progreso de carga**, la **orientación de la bala de la BAZOOKA** en la dirección de disparo, la **pantalla completa al pulsar "IR AL MENÚ"** (también en móvil) y la **separación rápida del clon del ENEMY4** con trayectoria propia. En la versión **v1.0-final** además el botón **"CAMBIAR ARMA"** se oculta durante el boss final cuando las armas están **confiscadas** (solo aparece en EXTREMO con más de un arma).
 
 ## Historial de incidencias
 

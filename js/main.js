@@ -83,6 +83,22 @@ if (isTouchDevice()) {
   window.addEventListener('pointerdown', requestFs, { passive: true });
 }
 
+// ---- Fullscreen desde el botón "IR AL MENÚ" ----
+// Phaser procesa el puntero en un contexto sin "transient activation", por lo que
+// requestFullscreen lanzado desde su callback no es aceptado en la PWA (Chrome/Android).
+// La solución: marcar un flag y pedir el fullscreen en el primer 'pointerup' NATIVO
+// real, que sí es un gesto de confianza (igual que el botón de fullscreen manual).
+let pendingFullscreenFromMenu = false;
+function requestFullscreenFromMenu() {
+  if (document.fullscreenElement) return;
+  pendingFullscreenFromMenu = true;
+}
+window.addEventListener('pointerup', () => {
+  if (!pendingFullscreenFromMenu) return;
+  pendingFullscreenFromMenu = false;
+  enterFullscreen();
+}, { passive: true });
+
 // ---- PWA: registro del service worker + aviso de nueva versión ----
 // En localhost (desarrollo) se desactiva el SW: se desregistra cualquier copia
 // ya instalada para evitar fallos de fetch (ERR_CACHE_MISS) que ralentizan la carga.

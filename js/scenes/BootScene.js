@@ -249,7 +249,13 @@ class BootScene extends Phaser.Scene {
     welcome.add([welcomeBg, welcomeText, btn]);
 
     const begin = () => {
-      if (typeof enterFullscreen === 'function') enterFullscreen();
+      // El fullscreen en táctil/PWA exige un gesto nativo de confianza (Phaser no lo
+      // aporta); requestFullscreenFromMenu() lo pide en el siguiente pointerup real.
+      if (typeof requestFullscreenFromMenu === 'function') {
+        requestFullscreenFromMenu();
+      } else if (typeof enterFullscreen === 'function') {
+        enterFullscreen();
+      }
       this.game.sfx.resume();
       if (this.game.sfx) this.game.sfx.click();
       if (this.game.inicioMusic && !this.game.inicioMusic.isPlaying) this.game.inicioMusic.play();
