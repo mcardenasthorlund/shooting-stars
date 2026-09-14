@@ -4,6 +4,48 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+
+    // ---- Barra de progreso de carga ----
+    const bg = this.add.graphics();
+    bg.fillStyle(0x05070f, 1);
+    bg.fillRect(0, 0, W, H);
+
+    const title = this.add.text(W / 2, H / 2 - 60, 'CARGANDO...', {
+      fontFamily: 'monospace',
+      fontSize: '22px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+
+    const barW = 320, barH = 18;
+    const barX = W / 2 - barW / 2, barY = H / 2;
+    const barBox = this.add.graphics();
+    barBox.fillStyle(0x0d1424, 1);
+    barBox.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    barBox.lineStyle(2, 0x4dd4ff, 1);
+    barBox.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
+
+    const barFill = this.add.graphics();
+    barFill.fillStyle(0x4dd4ff, 1);
+
+    const status = this.add.text(W / 2, H / 2 + 45, '0%', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#c8d2ea',
+    }).setOrigin(0.5, 0.5);
+
+    this.load.on('progress', (value) => {
+      barFill.clear();
+      barFill.fillStyle(0x4dd4ff, 1);
+      barFill.fillRect(barX, barY, barW * value, barH);
+      status.setText(Math.round(value * 100) + '%');
+    });
+    this.load.on('complete', () => {
+      barFill.clear();
+      status.setText('LISTO');
+    });
+
     this.load.image('logo', 'assets/logo.png');
     this.load.image('maniac_logo', 'assets/Logo-Maniac.png');
     this.load.image('intro_p1', 'assets/Intro_P1.png');
@@ -207,6 +249,7 @@ class BootScene extends Phaser.Scene {
     welcome.add([welcomeBg, welcomeText, btn]);
 
     const begin = () => {
+      if (typeof enterFullscreen === 'function') enterFullscreen();
       this.game.sfx.resume();
       if (this.game.sfx) this.game.sfx.click();
       if (this.game.inicioMusic && !this.game.inicioMusic.isPlaying) this.game.inicioMusic.play();

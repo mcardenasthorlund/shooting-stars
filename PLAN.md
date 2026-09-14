@@ -744,3 +744,24 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 ## Verificación
 - `node --check` de los archivos modificados: OK (`config.js`, `BootScene.js`, `GameScene.js`, `UIScene.js`, `ShopScene.js`, `Bullet.js`, `Player.js`, `SoundFX.js`).
 - Prueba en navegador pendiente: bienvenida + música de inicio, clics con sonido, DOUBLE GUN y BAZOOKA en tienda/INFO, cambio de arma en mitad de la partida (pausa/equipa/reanuda), y música de la tienda.
+
+## Sesión actual (UX de carga, bazooka, fullscreen del menú y clon del ENEMY4)
+
+### 97. Barra de progreso de carga ✅
+- `BootScene.preload()`: durante la carga de assets ya no se queda solo el fondo y los bordes del canvas.
+- Se dibuja una capa de carga: fondo `#05070f`, título "CARGANDO...", una **barra de progreso** azul (`0x4dd4ff`) con marco, un contador de **porcentaje** y el texto "LISTO" al terminar.
+- Se usa el evento `this.load.on('progress', value => …)` para redibujar el relleno y el porcentaje, y `this.load.on('complete', …)` para el estado final. Al entrar en `create()` esa capa queda tapada por la pantalla de inicio.
+
+### 98. Bala de la BAZOOKA orientada a la dirección de disparo ✅
+- Bug: el proyectil `bazooka-bala.png` salía siempre en **horizontal** aunque se disparara en otro ángulo.
+- `Bullet.js`: se añade `this.sprite.setRotation(angle)` tras `setOrigin`, de modo que el sprite con textura propia (p. ej. la bazooka) queda orientado hacia la dirección de disparo.
+
+### 99. Pantalla completa al pulsar "IR AL MENÚ" ✅
+- `BootScene.showWelcome()` → `begin()`: al pulsar el botón "IR AL MENÚ" se llama a `enterFullscreen()` (función ya existente en `main.js`) para poner el juego a **pantalla completa** si aún no lo está.
+- Reutiliza la misma función que el fullscreen por primer toque, por lo que en escritorio solicita fullscreen y en móvil/app standalone queda sin cambios.
+
+### 100. El clon del ENEMY4 se separa rápido y sigue trayectoria distinta ✅
+- `Enemy4Clone`: al nacer ya no queda apilado sobre el original (antes era fácil eliminarlo con una sola bala).
+- **Impulso de separación**: durante los primeros **1.1s** (`separation`) el clon se lanza en vertical hacia el lado libre de la pantalla (`dashDir`, según si nace sobre o bajo el centro) con `dashSpeed` de 140–220 y velocidad horizontal **×1.6**, para separarse rápido del principal.
+- **Trayectoria propia**: oscilación distinta de la del original (amplitud 35–85, frecuencia 1.5–2.6, fase aleatoria) para no viajar en paralelo y ser más difícil de derribar.
+- `node --check` de los archivos modificados: OK (`BootScene.js`, `Bullet.js`, `Enemy4.js`).

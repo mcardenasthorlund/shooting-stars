@@ -24,6 +24,8 @@ class Bullet {
     }
 
     this.sprite.setOrigin(0.5, 0.5);
+    // orienta el sprite en la dirección de disparo (p. ej. la bala de la bazooka)
+    this.sprite.setRotation(angle);
     this.sprite.setGravityY(0);
     this.sprite.body.setSize(size, size);
     this.sprite.setCollideWorldBounds(false);

@@ -82,15 +82,31 @@ class Enemy4Clone {
 
     this.life = CFG.ENEMY4_CLONE_LIFE;
     this.speedX = CFG.ENEMY4_SPEED * (scene.difficulty || 1);
-    this.amp = Phaser.Math.Between(30, 70);
-    this.freq = Phaser.Math.FloatBetween(1.2, 2.0);
+
+    // trayectoria propia, distinta de la del original
+    this.amp = Phaser.Math.Between(35, 85);
+    this.freq = Phaser.Math.FloatBetween(1.5, 2.6);
     this.phase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    // al nacer, se lanza rápido en vertical para separarse del original y no
+    // quedar apilado en el mismo sitio (fácil de eliminar con una sola bala)
+    const center = CFG.HEIGHT / 2;
+    this.dashDir = this.sprite.y >= center ? -1 : 1; // se aleja hacia el centro libre
+    this.dashSpeed = Phaser.Math.Between(140, 220);
+    this.separation = 1.1; // segundos que dura el impulso de separación
   }
 
   update(dt, time) {
-    // el clon tampoco gira: avanza hacia el player con oscilación
-    this.sprite.setVelocityX(-this.speedX);
-    const vy = Math.sin(time * this.freq + this.phase) * this.amp;
+    // el clon tampoco gira: avanza hacia el player con oscilación.
+    // Al principio se aleja rápido en vertical para separarse del original.
+    let vy = Math.sin(time * this.freq + this.phase) * this.amp;
+    if (this.separation > 0) {
+      this.separation -= dt / 1000;
+      this.sprite.setVelocityX(-this.speedX * 1.6);
+      vy += this.dashDir * this.dashSpeed;
+    } else {
+      this.sprite.setVelocityX(-this.speedX);
+    }
     this.sprite.setVelocityY(vy);
     const half = this.sprite.width / 2;
     if (this.sprite.y < half) this.sprite.y = half;

@@ -326,9 +326,12 @@ class UIScene extends Phaser.Scene {
       this.grenadeText.setVisible(false);
     }
 
-    // muestra el botón de cambio de arma solo si hay más de una arma comprada
+    // muestra el botón de cambio de arma solo si hay más de una arma comprada.
+    // Durante el boss final, si NO es EXTREMO, las armas están confiscadas (solo
+    // BLASTER), así que el botón se oculta; en EXTREMO se conserva.
     const owned = this.game.ownedWeapons || [CFG.DEFAULT_WEAPON];
-    if (owned.length > 1) {
+    const weaponsConfiscated = !!game.finalBossActive && !game.isExtremeRun;
+    if (owned.length > 1 && !weaponsConfiscated) {
       this.weaponSwitchBtn.setVisible(!this.weaponWin);
     } else {
       this.weaponSwitchBtn.setVisible(false);
