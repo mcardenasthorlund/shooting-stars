@@ -110,21 +110,45 @@ class UIScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(1, 0);
 
-    // ---- Modo ADMIN oculto: 5 toques rápidos sobre la zona de puntos lo activan ----
-    this.adminTaps = 0;
-    this.adminTapWindow = 0;
-    this.adminZone = this.add.rectangle(W - 90, H - 45, 180, 80, 0xffffff, 0)
-      .setInteractive();
-    this.adminZone.on('pointerdown', (pointer, localX, localY, event) => {
+    // ---- Modo ADMIN oculto: 2 toques en FASE x + 2 en puntos + 2 en FASE x lo abren ----
+    // La secuencia se resetea si pasa demasiado tiempo entre toques.
+    this.adminSeq = 0;         // 0..5 toques completados de la secuencia
+    this.adminSeqWindow = 0;   // marca de tiempo del último toque válido
+    this.adminSeqTimeout = 2500;
+
+    // zonas interactivas de la secuencia
+    this.adminFaseZone = this.add.rectangle(W / 2, 20, 220, 70, 0xffffff, 0).setInteractive();
+    this.adminPuntosZone = this.add.rectangle(W - 90, H - 45, 180, 80, 0xffffff, 0).setInteractive();
+
+    const resetAdminSeq = () => {
+      this.adminSeq = 0;
+      this.adminSeqWindow = 0;
+    };
+
+    // registra un toque en una zona; solo avanza si el paso actual pertenece a esa zona.
+    // FASE acepta los pasos 0,1 (primeros dos) y 4,5 (últimos dos); PUNTOS los pasos 2,3.
+    const adminTap = (validSteps, event) => {
       event.stopPropagation();
       const now = this.time.now;
-      if (now - this.adminTapWindow > 1500) this.adminTaps = 0;
-      this.adminTapWindow = now;
-      this.adminTaps++;
-      if (this.adminTaps >= 5) {
-        this.adminTaps = 0;
+      if (now - this.adminSeqWindow > this.adminSeqTimeout) this.adminSeq = 0;
+      const step = this.adminSeq % 6;
+      if (!validSteps.includes(step)) {
+        resetAdminSeq();
+        return;
+      }
+      this.adminSeqWindow = now;
+      this.adminSeq++;
+      if (this.adminSeq >= 6) {
+        resetAdminSeq();
         this.openAdmin();
       }
+    };
+
+    this.adminFaseZone.on('pointerdown', (pointer, localX, localY, event) => {
+      adminTap([0, 1, 4, 5], event);
+    });
+    this.adminPuntosZone.on('pointerdown', (pointer, localX, localY, event) => {
+      adminTap([2, 3], event);
     });
 
     // ---- Versión del juego (abajo a la izquierda) ----
@@ -599,6 +623,9 @@ class UIScene extends Phaser.Scene {
       { label: 'ELIMINAR BOSS FINAL', action: () => game.forceFinalVictory() },
     ];
 
+    // estado de selección: cada comando arranca desmarcado
+    const selected = commands.map(() => false);
+
     const btnW = 220, btnH = 40, gap = 14;
     const startY = H / 2 - 100;
     commands.forEach((cmd, i) => {
@@ -616,21 +643,67 @@ class UIScene extends Phaser.Scene {
         color: '#c8d2ea',
         fontStyle: 'bold',
       }).setOrigin(0.5, 0.5);
-      btn.add([rect, text]);
+      const check = this.add.text(btnW / 2 - 12, 0, '', {
+        fontFamily: 'monospace',
+        fontSize: '18px',
+        color: '#39ff6e',
+        fontStyle: 'bold',
+      }).setOrigin(0.5, 0.5);
+
+      const paint = () => {
+        const on = selected[i];
+        rect.setFillStyle(on ? 0x2a3a5a : 0x1a2340, 1);
+        rect.setStrokeStyle(1, on ? 0x39ff6e : 0x4dd4ff, 1);
+        check.setText(on ? '✔' : '');
+        text.setColor(on ? '#ffffff' : '#c8d2ea');
+      };
+      paint();
+
+      btn.add([rect, text, check]);
       btn.setSize(btnW, btnH);
-      rect.on('pointerover', () => rect.setFillStyle(0x2a3a5a, 1));
-      rect.on('pointerout', () => rect.setFillStyle(0x1a2340, 1));
+      rect.on('pointerover', () => {
+        if (!selected[i]) rect.setFillStyle(0x2a3a5a, 1);
+      });
+      rect.on('pointerout', () => {
+        if (!selected[i]) rect.setFillStyle(0x1a2340, 1);
+      });
       rect.on('pointerdown', (pointer, lx, ly, event) => {
         event.stopPropagation();
         if (this.game.sfx) this.game.sfx.click();
-        cmd.action();
-        this.closeAdmin();
+        selected[i] = !selected[i];
+        paint();
       });
       this.adminWin.add(btn);
     });
 
-    const closeBtn = this.add.container(W / 2, H / 2 + winH / 2 - 28);
-    const closeRect = this.add.rectangle(0, 0, 140, 34, 0x1a2338, 1)
+    // CONFIRMAR: aplica todos los comandos marcados y cierra la ventana
+    const confirmBtn = this.add.container(W / 2 - 160, H / 2 + winH / 2 - 28);
+    const confirmRect = this.add.rectangle(0, 0, 160, 34, 0x1a2338, 1)
+      .setStrokeStyle(1, 0x39ff6e, 1)
+      .setInteractive({ useHandCursor: true });
+    const confirmText = this.add.text(0, 0, 'CONFIRMAR', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#39ff6e',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    confirmBtn.add([confirmRect, confirmText]);
+    confirmBtn.setSize(160, 34);
+    confirmRect.on('pointerover', () => confirmRect.setFillStyle(0x2a3a5a, 1));
+    confirmRect.on('pointerout', () => confirmRect.setFillStyle(0x1a2338, 1));
+    confirmRect.on('pointerdown', (pointer, lx, ly, event) => {
+      event.stopPropagation();
+      if (this.game.sfx) this.game.sfx.click();
+      // se aplican en orden los comandos marcados
+      commands.forEach((cmd, i) => {
+        if (selected[i]) cmd.action();
+      });
+      this.closeAdmin();
+    });
+    this.adminWin.add(confirmBtn);
+
+    const closeBtn = this.add.container(W / 2 + 160, H / 2 + winH / 2 - 28);
+    const closeRect = this.add.rectangle(0, 0, 160, 34, 0x1a2338, 1)
       .setStrokeStyle(1, 0xff5a5a, 1)
       .setInteractive({ useHandCursor: true });
     const closeText = this.add.text(0, 0, 'CERRAR', {
@@ -640,7 +713,7 @@ class UIScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5, 0.5);
     closeBtn.add([closeRect, closeText]);
-    closeBtn.setSize(140, 34);
+    closeBtn.setSize(160, 34);
     closeRect.on('pointerover', () => closeRect.setFillStyle(0x2a3a5a, 1));
     closeRect.on('pointerout', () => closeRect.setFillStyle(0x1a2338, 1));
     closeRect.on('pointerdown', (pointer, lx, ly, event) => {

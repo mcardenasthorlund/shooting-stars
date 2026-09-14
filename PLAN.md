@@ -94,8 +94,8 @@
 | 87 | Pantalla **WARNING** del boss final usa el sprite `warning-final-boss.png` (sustituye al texto WARNING y a la calavera procedural) | ✅ |
 | 88 | Matar al **BOSS FINAL** otorga **500 puntos** (`POINTS_PER_FINAL_BOSS`) | ✅ |
 | — | Versión actualizada a **0.9-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
-| 101 | **Modo ADMIN** de pruebas: 5 toques seguidos sobre el contador de puntos abren una ventana con un botón por cada comando especial (invocar BOSS, Game Over, enemigo variante, power up, victoria del BOSS, +10.000 puntos, iniciar/eliminar el BOSS FINAL); al pulsar uno se ejecuta, se cierra y se reanuda la partida | ✅ |
-| — | Versión actualizada a **1.0.1-final-release** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 101 | **Modo ADMIN** de pruebas: la secuencia de toques **2× "FASE x" + 2× puntos + 2× "FASE x"** (en orden, reseteo si se sale de orden o pasan 2,5s) abre una ventana con un botón por cada comando especial; los botones se pueden **marcar/desmarcar** (✔) y **CONFIRMAR** ejecuta todos los marcados y reanuda; **CERRAR** sale sin aplicar | ✅ |
+| — | Versión actualizada a **1.0.3-final-release** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -787,3 +787,23 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - Versión actualizada a **1.0.1-final-release** (`CFG.VERSION` en `config.js` y `VERSION` en `sw.js`).
 - `node --check` de los archivos modificados: OK (`UIScene.js`, `config.js`, `sw.js`).
 - Prueba en navegador pendiente: 5 toques rápidos sobre los puntos, apertura/pausa, ejecución de cada comando, cierre y reanudación.
+
+## Sesión actual (Modo ADMIN con selección múltiple) — v1.0.2-final-release
+
+### 102. Botones seleccionables + CONFIRMAR ✅
+- Los botones del Modo ADMIN pasan a ser **interactivos y seleccionables**: al pulsarlos se **marcan** (borde y tilde verde **✔**, texto blanco) y al volver a pulsarlos se **desmarcan**.
+- Se mantiene un array `selected[]` con el estado de cada comando; el repintado (`paint()`) actualiza fondo, borde, tilde y color del texto.
+- Botón **CONFIRMAR** (verde, a la izquierda): aplica **en orden** todos los comandos marcados (`commands.forEach(cmd => cmd.action())`) y cierra la ventana reanudando la partida.
+- Botón **CERRAR** (rojo, a la derecha): sale sin aplicar nada.
+- Versión actualizada a **1.0.2-final-release** (`CFG.VERSION` y `sw.js`).
+
+## Sesión actual (secuencia de apertura del Modo ADMIN) — v1.0.3-final-release
+
+### 103. Apertura por secuencia de 6 toques ✅
+- Se sustituye el disparador de "5 toques sobre los puntos" por una **secuencia ordenada**: **2 toques en "FASE x"** (arriba centro) + **2 toques sobre los puntos** (abajo derecha) + **2 toques en "FASE x"**.
+- Zonas interactivas: `adminFaseZone` (rectángulo invisible sobre el indicador de fase) y `adminPuntosZone` (sobre el contador de puntos).
+- Máquina de estados `adminSeq` (0..5): **FASE** acepta los pasos 0,1,4,5; **PUNTOS** acepta los pasos 2,3. Un toque en la zona equivocada **reinicia** la secuencia a 0; si pasan más de **2,5s** (`adminSeqTimeout`) entre toques también se reinicia.
+- Al completar los 6 toques se llama a `openAdmin()`; los botones CONFIRMAR/CERRAR mantienen su comportamiento.
+- Versión actualizada a **1.0.3-final-release** (`CFG.VERSION` y `sw.js`).
+- `node --check` de los archivos modificados: OK (`UIScene.js`, `config.js`, `sw.js`).
+- Prueba en navegador pendiente: secuencia de 6 toques en orden, reinicio por toque fuera de orden / pausa >2,5s, marcado múltiple, CONFIRMAR y CERRAR.

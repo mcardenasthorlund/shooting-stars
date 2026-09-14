@@ -10,7 +10,7 @@ Juego **shooter espacial pixel** con movimiento horizontal, desarrollado por Man
 
 ## 🌐 Juega online e instálalo en cualquier dispositivo
 
-▶️ **Juega a la versión actual (v1.0.1-final):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
+▶️ **Juega a la versión actual (v1.0.3-final):** **[https://shootingstars.ideasypruebas2.es](https://shootingstars.ideasypruebas2.es)**
 
 Desde esa URL puedes **jugar directamente** en el navegador (móvil en horizontal o en el ordenador) e **instalar el juego como PWA**:
 
@@ -56,7 +56,7 @@ En la pantalla, arriba a la izquierda, aparece el botón **"⬇ INSTALAR APP"** 
 - **Tienda de armas:** al derrotar al BOSS puedes entrar en la **TIENDA**. Con tus puntos compras armas nuevas (REVOLVER, DOUBLE GUN, SHOTGUN, UZI, BAZOOKA) que se quedan guardadas durante la partida; después puedes **EQUIPAR** en cualquier momento cualquiera de las que ya tengas. El arma equipada se dibuja en el cañón del jugador.
 - **Cambio de arma en partida:** durante la partida, el botón **"CAMBIAR ARMA"** (abajo, junto al inventario) abre una ventana que pausa el juego y muestra las armas compradas en cajas para equipar la que quieras al instante. El botón solo se muestra si tienes **más de una arma comprada**, y se **oculta durante el boss final** cuando tus armas han sido **confiscadas** (salvo en EXTREMO, donde se conserva).
 - **Cargador del REVOLVER:** dispara **6 balas** seguidas y luego necesita **1.5s de recarga**; un contador junto al inventario muestra las balas restantes.
-- **Modo ADMIN (pruebas):** toca **5 veces seguidas** sobre el contador de puntos (abajo a la derecha) para pausar la partida y abrir una ventana **"MODO ADMIN"** con un botón por cada comando de prueba (invocar BOSS, Game Over, enemigo variante, power up, victoria del BOSS, +10.000 puntos, iniciar/eliminar el BOSS FINAL). Al pulsar un botón se ejecuta el comando, se cierra la ventana y se reanuda la partida.
+- **Modo ADMIN (pruebas):** toca la secuencia **2 veces en "FASE x" (arriba centro) + 2 veces sobre los puntos (abajo a la derecha) + 2 veces en "FASE x"** para pausar la partida y abrir una ventana **"MODO ADMIN"** con un botón por cada comando de prueba (invocar BOSS, Game Over, enemigo variante, power up, victoria del BOSS, +10.000 puntos, iniciar/eliminar el BOSS FINAL). Puedes **marcar varios botones** y pulsar **CONFIRMAR** para ejecutarlos todos a la vez y reanudar la partida, o **CERRAR** para salir sin aplicar nada.
 - **Fases:** al derrotar al BOSS superas una **fase** (VICTORY + WAVE COMPLETED), atraviesas un túnel de velocidad de la luz y la dificultad aumenta. El juego tiene **5 oleadas**; en la **quinta** aparece el **BOSS FINAL**. Al derrotarlo ves **"VENGANZA CUMPLIDA"** y puedes **CONTINUAR** (reinicia en una dificultad superior manteniendo la puntuación) o **TERMINAR** (vuelve al menú).
 - **Dificultad:** al comenzar cada partida eliges el nivel (**FÁCIL**, **MEDIO**, **DIFÍCIL** o **EXTREMO**). A más dificultad, los enemigos son **más rápidos** y **aparecen más** (además de la progresión por fases), y el boss final lanza **más espadas y más rápidas**. El nivel se muestra bajo el indicador de fase. En **EXTREMO** el boss final **no te confisca las armas**.
 - **Récords:** tu mejor puntuación se guarda automáticamente en tu navegador.
@@ -196,6 +196,10 @@ La versión **v0.9-prerelease** añade el nuevo enemigo **ENEMY4** (fase 3+): **
 La última sesión añadió además una **barra de progreso de carga**, la **orientación de la bala de la BAZOOKA** en la dirección de disparo, la **pantalla completa al pulsar "IR AL MENÚ"** (también en móvil) y la **separación rápida del clon del ENEMY4** con trayectoria propia. En la versión **v1.0-final** además el botón **"CAMBIAR ARMA"** se oculta durante el boss final cuando las armas están **confiscadas** (solo aparece en EXTREMO con más de un arma).
 
 La versión **v1.0.1-final** añade el **Modo ADMIN** de pruebas (toque 5 veces sobre el contador de puntos) con un botón por cada comando especial del juego.
+
+La versión **v1.0.2-final** permite **marcar varios botones** en la ventana ADMIN (con tilde verde ✔) y ejecutarlos todos a la vez con el botón **CONFIRMAR** (además de CERRAR para salir sin aplicar).
+
+La versión **v1.0.3-final** cambia la secuencia para abrir el Modo ADMIN: ahora son **2 toques en "FASE x" + 2 toques sobre los puntos + 2 toques en "FASE x"** (en orden; un toque fuera de orden o más de 2,5s de pausa reinicia la secuencia).
 
 ## Historial de incidencias
 
