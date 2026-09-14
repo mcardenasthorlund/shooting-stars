@@ -39,6 +39,10 @@ class BootScene extends Phaser.Scene {
     this.load.image('weapon_revolver_img', 'assets/Revolver.png');
     this.load.image('weapon_shotgun_img', 'assets/Shotgun.png');
     this.load.image('weapon_uzi_img', 'assets/Uzi.png');
+    this.load.image('weapon_doublegun_img', 'assets/doble-disparo.png');
+    this.load.image('weapon_bazooka1_img', 'assets/bazooka-1.png');
+    this.load.image('weapon_bazooka2_img', 'assets/bazooka-2.png');
+    this.load.image('weapon_bazooka_bullet', 'assets/bazooka-bala.png');
     this.load.image('shop_img', 'assets/tienda.png');
     this.load.image('shop_img3', 'assets/tienda3.png');
     this.load.image('shop_img4', 'assets/tienda4.png');
@@ -48,6 +52,8 @@ class BootScene extends Phaser.Scene {
     this.load.image('planet3', 'assets/Planeta_Fondo_N3.png');
     this.load.image('back_planet_img', 'assets/Back_Planet.png');
     this.load.audio('music', 'assets/audio/musica.mp3');
+    this.load.audio('inicio_music', 'assets/audio/inicio.mp3');
+    this.load.audio('tienda_music', 'assets/audio/tienda.mp3');
     this.load.audio('boss_music', 'assets/audio/musica-boss.mp3');
     this.load.audio('boss_final_music', 'assets/audio/boss-final.mp3');
     this.load.audio('victory', 'assets/audio/victoria.mp3');
@@ -56,6 +62,20 @@ class BootScene extends Phaser.Scene {
 
   create() {
     const { WIDTH: W, HEIGHT: H } = CFG;
+
+    // Audio disponible desde el inicio (los botones del menú lo usan)
+    this.game.sfx = this.game.sfx || new SoundFX();
+    // Desbloquea el AudioContext con el primer gesto del usuario
+    this.input.once('pointerdown', () => {
+      if (this.game.sfx) this.game.sfx.resume();
+    });
+
+    // Música de la pantalla de inicio (en bucle); se lanza al hacer clic en la bienvenida
+    if (this.game.inicioMusic) {
+      this.game.inicioMusic.destroy();
+      this.game.inicioMusic = null;
+    }
+    this.game.inicioMusic = this.sound.add('inicio_music', { loop: true, volume: 0.5 });
 
     if (this.sys.canvas) this.sys.canvas.style.cursor = 'default';
 
@@ -135,8 +155,70 @@ class BootScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.input.keyboard.once('keydown-ENTER', this.showIntro, this);
-    this.input.once('pointerdown', this.showIntro, this);
+    this.showWelcome();
+  }
+
+  // Pantalla de bienvenida: texto arriba y un botón abajo que lleva al menú de
+  // inicio. El clic también desbloquea el audio y lanza la música de inicio.
+  showWelcome() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+
+    const welcome = this.add.container(0, 0);
+    welcome.setDepth(1000);
+
+    const welcomeBg = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.97).setInteractive();
+
+    const welcomeText = this.add.text(W / 2, 120, [
+      'BIENVENIDO A SHOOTING STARS',
+      '¿QUIERES JUGAR?',
+    ], {
+      fontFamily: 'monospace',
+      fontSize: '30px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+      align: 'center',
+      lineSpacing: 10,
+    }).setOrigin(0.5, 0.5);
+
+    const btn = this.add.container(W / 2, H - 140);
+    const btnRect = this.add.rectangle(0, 0, 260, 54, 0x1a2338, 1).setStrokeStyle(2, 0x4dd4ff, 1);
+    const btnText = this.add.text(0, 0, 'IR AL MENÚ', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#c8d2ea',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    btn.add([btnRect, btnText]);
+    btn.setSize(260, 54);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on('pointerover', () => {
+      btnRect.setFillStyle(0x2a3a5a, 1);
+      btnText.setColor('#ffffff');
+    });
+    btn.on('pointerout', () => {
+      btnRect.setFillStyle(0x1a2338, 1);
+      btnText.setColor('#c8d2ea');
+    });
+    btn.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      begin();
+    });
+
+    welcome.add([welcomeBg, welcomeText, btn]);
+
+    const begin = () => {
+      this.game.sfx.resume();
+      if (this.game.sfx) this.game.sfx.click();
+      if (this.game.inicioMusic && !this.game.inicioMusic.isPlaying) this.game.inicioMusic.play();
+      this.tweens.add({
+        targets: welcome,
+        alpha: 0,
+        duration: 400,
+        onComplete: () => welcome.destroy(),
+      });
+      this.input.keyboard.once('keydown-ENTER', this.showIntro, this);
+      this.input.once('pointerdown', this.showIntro, this);
+    };
   }
 
   showIntro() {
@@ -408,6 +490,7 @@ class BootScene extends Phaser.Scene {
     });
     container.on('pointerdown', (pointer, localX, localY, event) => {
       event.stopPropagation();
+      if (this.game.sfx) this.game.sfx.click();
       onClick();
     });
     return container;
@@ -430,14 +513,14 @@ class BootScene extends Phaser.Scene {
     const winW = 700, winH = 460;
     const winBg = this.add.rectangle(0, 0, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0x4dd4ff, 1);
 
-    const maniac = this.add.image(0, -50, 'maniac_logo');
+    const maniac = this.add.image(0, -150, 'maniac_logo');
     const src = this.textures.get('maniac_logo').getSourceImage();
-    const maxW = winW - 40, maxH = 340;
+    const maxW = winW - 40, maxH = 150;
     const scale = Math.min(maxW / src.width, maxH / src.height);
     maniac.setScale(scale);
     maniac.setOrigin(0.5, 0.5);
 
-    const creditText = this.add.text(0, 140, ['HECHO POR MANUEL Y MANOLO', 'y una máquina llamada DeepSeek'], {
+    const creditText = this.add.text(0, -45, ['HECHO POR MANUEL Y MANOLO', 'y una máquina llamada DeepSeek'], {
       fontFamily: 'monospace',
       fontSize: '18px',
       color: '#ffd93b',
@@ -445,7 +528,41 @@ class BootScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5, 0.5);
 
-    const exitBtn = this.add.container(0, 195);
+    const musicTitle = this.add.text(0, -18, 'MÚSICA', {
+      fontFamily: 'monospace',
+      fontSize: '15px',
+      color: '#4dd4ff',
+      fontStyle: 'bold',
+      align: 'center',
+    }).setOrigin(0.5, 0.5);
+
+    const musicText = this.add.text(0, 48, [
+      '"Black Knife" — Toby Fox (Deltarune)',
+      '"Piece Sea Theme" — mygame43 y rip_indra (Blox Fruits, Roblox)',
+      '"Pirate Dojo" — Toby Fox (Deltarune)',
+      '"Final Strategy" — RundownSD',
+      '"Sensory Overload" — key_after_key',
+    ], {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#c8d2ea',
+      align: 'center',
+      lineSpacing: 6,
+    }).setOrigin(0.5, 0.5);
+
+    const legalText = this.add.text(0, 128, [
+      'Aviso legal: Deltarune es propiedad registrada de Toby Fox.',
+      'Este juego es un proyecto de fans sin ánimo de lucro y',
+      'no está afiliado ni respaldado por ninguna de las empresas indicadas en los créditos.',
+    ], {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#8fa0c0',
+      align: 'center',
+      lineSpacing: 5,
+    }).setOrigin(0.5, 0.5);
+
+    const exitBtn = this.add.container(0, 190);
     const exitRect = this.add.rectangle(0, 0, 120, 34, 0x1a2338, 1).setStrokeStyle(1, 0xff5a5a, 1);
     const exitText = this.add.text(0, 0, 'SALIR', {
       fontFamily: 'monospace',
@@ -468,7 +585,7 @@ class BootScene extends Phaser.Scene {
       close();
     });
 
-    win.add([winBg, maniac, creditText, exitBtn]);
+    win.add([winBg, maniac, creditText, musicTitle, musicText, legalText, exitBtn]);
   }
 
   // pantalla de información del juego: 3 secciones (Enemigos / Power Ups / Armas),
@@ -557,8 +674,10 @@ class BootScene extends Phaser.Scene {
         items: [
           { img: 'player_img', name: 'BLASTER', desc: 'Arma inicial. 1 de daño, disparo rápido.' },
           { img: 'weapon_revolver_img', name: 'REVOLVER', desc: '3 de daño, cargador de 6 con recarga. 60 pts.' },
-          { img: 'weapon_shotgun_img', name: 'SHOTGUN', desc: '3 balas en abanico. 200 pts.' },
+          { img: 'weapon_doublegun_img', name: 'DOUBLE GUN', desc: 'Dos balas paralelas alternando arriba y abajo. 200 pts.' },
+          { img: 'weapon_shotgun_img', name: 'SHOTGUN', desc: '3 balas en abanico. 350 pts.' },
           { img: 'weapon_uzi_img', name: 'UZI', desc: 'Ráfaga rapidísima de bajo daño. 500 pts.' },
+          { img: 'weapon_bazooka1_img', name: 'BAZOOKA', desc: 'Bala perforante de 5 daño + explosiones en cadena a lo largo de la línea. 450 pts.' },
         ],
       },
     ];
@@ -614,6 +733,7 @@ class BootScene extends Phaser.Scene {
       tab.setInteractive({ useHandCursor: true });
       tab.on('pointerdown', (pointer, localX, localY, event) => {
         event.stopPropagation();
+        if (this.game.sfx) this.game.sfx.click();
         rebuild(ti);
       });
       win.add(tab);
@@ -700,6 +820,7 @@ class BootScene extends Phaser.Scene {
       });
       btn.on('pointerdown', (pointer, localX, localY, event) => {
         event.stopPropagation();
+        if (this.game.sfx) this.game.sfx.click();
         this.game.selectedDifficulty = def.mult;
         this.start();
       });
@@ -723,6 +844,7 @@ class BootScene extends Phaser.Scene {
       gs.victoryPending = false;
       if (gs.spawner) gs.spawner.resetWave();
     }
+    if (this.game.inicioMusic && this.game.inicioMusic.isPlaying) this.game.inicioMusic.stop();
     this.scene.start('GameScene');
     this.scene.launch('UIScene');
   }

@@ -111,6 +111,25 @@ class SoundFX {
     }
   }
 
+  // clic de UI: tono corto ascendente para botones y menús
+  click(volume = 0.3) {
+    if (!this.ctx) return;
+    this.resume();
+    const ctx = this.ctx;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(650, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.06);
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.09);
+  }
+
   // tecleo: clic corto de ruido para la máquina de escribir
   type(volume = 0.15) {
     if (!this.ctx || !this.noiseBuffer) return;

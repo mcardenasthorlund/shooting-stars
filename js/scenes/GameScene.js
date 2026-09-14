@@ -77,6 +77,9 @@ class GameScene extends Phaser.Scene {
     this.lastFireTime = -CFG.FIRE_COOLDOWN;
     this.fireQueue = [];
     this.grenadeShotsLeft = 0;
+    this.doubleGunSide = 1;
+    this.uiLocked = false;
+    this.bazookaReady = true;
 
     // munición del cargador (solo armas con magSize) y recarga
     this.reloadWeapon();
@@ -159,10 +162,10 @@ class GameScene extends Phaser.Scene {
 
   onBulletEnemy(bullet, enemySprite) {
     const damage = bullet.getData('damage') || 1;
-    bullet.destroy();
     const handler = enemySprite.getData('handler');
-    if (!handler) return;
-    this.handleHit(handler, enemySprite, damage);
+    if (handler) this.handleHit(handler, enemySprite, damage);
+    // las balas perforantes (bazooka) atraviesan a los enemigos sin destruirse
+    if (!bullet.getData('pierce')) bullet.destroy();
   }
 
   onBulletPowerUp(bullet, powerUpSprite) {
@@ -1128,6 +1131,47 @@ class GameScene extends Phaser.Scene {
     this.explosions.push(new Explosion(this, x, y, size * 0.9));
   }
 
+// explosiones en cadena de la bazooka a lo largo de la línea de disparo,
+// cada una de 1/8 de pantalla, que aparecen de forma progresiva siguiendo a la bala
+  spawnBazookaExplosions(x, y, angle, weapon) {
+    const radius = weapon.explosionRadius || CFG.WIDTH / 8;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const step = radius * 2;
+    let dist = radius;
+    while (x + cos * dist < CFG.WIDTH + radius && x + cos * dist > CFG.PLAYER_X) {
+      const ex = x + cos * dist;
+      const ey = y + sin * dist;
+      // cada explosión aparece cuando la bala (a 520 px/s) va llegando a esa distancia
+      const delay = (dist / CFG.BULLET_SPEED) * 1000;
+      this.time.delayedCall(delay, () => {
+        this.spawnExplosion(ex, ey, radius);
+        this.damageEnemiesInRadius(ex, ey, radius, weapon.explosionDamage || 3);
+      });
+      dist += step;
+    }
+  }
+
+  // daña a todos los enemigos (y espadas del boss final) dentro de un radio
+  damageEnemiesInRadius(x, y, radius, amount) {
+    if (this.spawner) {
+      const list = this.spawner.enemies.getChildren().slice();
+      for (const s of list) {
+        if (!s.active) continue;
+        if (Phaser.Math.Distance.Between(x, y, s.x, s.y) <= radius) {
+          const h = s.getData('handler');
+          if (h) this.handleHit(h, s, amount);
+        }
+      }
+    }
+    const swords = this.finalSwords.getChildren().slice();
+    for (const s of swords) {
+      if (!s.active) continue;
+      if (Phaser.Math.Distance.Between(x, y, s.x, s.y) <= radius) {
+        this.hitFinalSword(s, amount);
+      }
+    }
+  }
+
   // explosión distinta al impactar un enemigo contra el escudo del jugador
   spawnShieldExplosion(x, y) {
     this.explosions.push(new Explosion(this, x, y, CFG.SHIELD_EXPLOSION_RADIUS, 0xff3b4a));
@@ -1278,7 +1322,25 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // bloquea/desbloquea el disparo mientras una ventana de UI está abierta
+  setUILocked(locked) {
+    this.uiLocked = locked;
+  }
+
+  // equipa un arma comprada en medio de la partida
+  equipWeapon(key) {
+    const w = CFG.WEAPONS[key];
+    if (!w) return;
+    if (this.player && this.player.setWeapon) this.player.setWeapon(key);
+    else this.player.weapon = key;
+    this.reloadWeapon();
+    this.game.equippedWeapon = key;
+    this.bazookaReady = true;
+  }
+
   tryFire() {
+    // mientras una ventana de UI está abierta (p. ej. cambio de arma) no se dispara
+    if (this.uiLocked) return;
     // durante la recarga no se puede disparar
     if (this.reloading) return;
     // en modo GRANADE: un disparo por pulsación, ignorando las pulsaciones
@@ -1311,8 +1373,27 @@ class GameScene extends Phaser.Scene {
     const sizeFactor = this.time.now < this.bigBoyUntil ? CFG.BIG_BOY_SIZE_MULT : 1;
     const weapon = this.getWeapon();
 
+    // DOUBLE GUN: dispara una bala de cada vez, alternando arriba y abajo (paralelas)
+    if (weapon.double) {
+      const baseAngle = p.getGunRadians();
+      const side = this.doubleGunSide;
+      this.doubleGunSide = -side;
+      const perp = baseAngle + Math.PI / 2;
+      const offset = 8 * side;
+      const bx = tipX + Math.cos(perp) * offset;
+      const by = tipY + Math.sin(perp) * offset;
+      this.fireBullet(bx, by, baseAngle, sizeFactor, weapon);
+    }
+    // BAZOOKA: bala perforante + explosiones en cadena a lo largo de la línea de disparo
+    else if (weapon.bazooka) {
+      const baseAngle = p.getGunRadians();
+      this.fireBullet(tipX, tipY, baseAngle, sizeFactor, weapon);
+      this.spawnBazookaExplosions(tipX, tipY, baseAngle, weapon);
+      this.bazookaReady = false;
+      if (weapon.imgFiring) p.setGunTexture(weapon.imgFiring);
+    }
     // SHOTGUN y armas con dispersión: disparan varias balas a la vez en abanico
-    if (weapon.spread && weapon.pellets > 1) {
+    else if (weapon.spread && weapon.pellets > 1) {
       const baseAngle = p.getGunRadians();
       const half = Math.floor((weapon.pellets - 1) / 2);
       for (let i = 0; i < weapon.pellets; i++) {
@@ -1332,6 +1413,7 @@ class GameScene extends Phaser.Scene {
     this.bullets.add(bullet.sprite);
     bullet.sprite.setData('life', 0);
     bullet.sprite.setData('handler', bullet);
+    bullet.sprite.setData('pierce', !!(weapon && weapon.pierce));
   }
 
   update(time, delta) {
@@ -1339,6 +1421,15 @@ class GameScene extends Phaser.Scene {
 
     // tiempo de juego acumulado (ms), arranca en 0 al empezar la partida
     this.gameplayTime += delta;
+
+    // la bazooka vuelve a su aspecto inicial a mitad del cooldown (aún recargando)
+    if (this.player && this.player.weapon === 'BAZOOKA' && !this.bazookaReady) {
+      const weapon = this.getWeapon();
+      if (this.time.now - this.lastFireTime >= weapon.cooldown / 2) {
+        this.bazookaReady = true;
+        if (weapon.img) this.player.setGunTexture(weapon.img);
+      }
+    }
 
     // temporizador del TIME STOP: actualiza la cuenta atrás y lo termina al agotarse
     if (this.timestopActive) {

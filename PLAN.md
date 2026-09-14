@@ -700,3 +700,47 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - `CFG.VERSION` → `0.9-prerelease` (config.js) y `VERSION` en `sw.js` → `0.9-prerelease` (bumpear para que el service worker detecte la actualización y muestre el aviso).
 - `node --check` de los archivos modificados: OK (`config.js`, `Enemy4.js`, `Boss.js`, `EnemySpawner.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`).
 - Prueba en navegador pendiente: oleada 3 (ENEMY4 y su duplicación/venganza), vida del BOSS por dificultad en cada oleada, CONTINUAR tras el boss final (vida del BOSS reseteada y +500 puntos), y el nuevo WARNING del boss final.
+
+## Sesión actual (bienvenida, sonido UI, música, créditos, nuevas armas y cambio de arma)
+
+### 89. Pantalla de bienvenida ✅
+- `BootScene.showWelcome()`: al entrar se muestra una pantalla con el texto **"BIENVENIDO A SHOOTING STARS / ¿QUIERES JUGAR?"** arriba y un botón **"IR AL MENÚ"** abajo.
+- Al pulsar el botón se **desbloquea el audio** (`sfx.resume()`), se lanza la **música de inicio** (`inicio.mp3`) y se hace fade-out hacia el menú principal. Cumple la política de autoplay (la música solo arranca tras el gesto del usuario).
+
+### 90. Efecto de sonido de clic en la UI ✅
+- `SoundFX.click()` (tono triangular ascendente corto) añadido a `SoundFX.js`.
+- Se conecta en: botones del menú principal (CREDITOS/INFO), botones de dificultad, **tabs de la pantalla INFO**, y todos los botones de la **tienda** (armas, COMPRAR, EQUIPAR, CONFIRMAR, CANCELAR, SALIR) y del menú de victoria (SHOP/CONTINUE/SURRENDER).
+- Fix: `this.game.sfx` se creaba tarde (dentro de `showIntro`), por lo que los botones del menú inicial no tenían sonido; ahora se crea en `create()` y se desbloquea con el primer `pointerdown`.
+
+### 91. Música de inicio y de la tienda ✅
+- `inicio.mp3` (`inicio_music`): se reproduce en bucle en la pantalla de inicio, se lanza al confirmar la bienvenida y se detiene al empezar la partida (`BootScene.start()`); se recrea correctamente al volver al menú.
+- `tienda.mp3` (`tienda_music`): suena al entrar en la tienda (`ShopScene.startShopMusic()`, pausa la música de la partida) y se detiene al salir/continuar/rendirse (`stopShopMusic()`).
+
+### 92. Créditos de música ✅
+- Ventana CREDITOS: lista de canciones **"Black Knife" (Toby Fox, Deltarune)**, **"Piece Sea Theme" (mygame43 y rip_indra, Blox Fruits/Roblox)**, **"Pirate Dojo" (Toby Fox, Deltarune)**, **"Final Strategy" (RundownSD)** y **"Sensory Overload" (key_after_key)**.
+- **Aviso legal**: "Este juego es un proyecto de fans sin ánimo de lucro y no está afiliado ni respaldado por ninguna de las empresas indicadas en los créditos".
+
+### 93. Arma DOUBLE GUN ✅
+- Nueva arma en `CFG.WEAPONS` (`assets/doble-disparo.png`): coste **200**, daño **0.5**, cadencia **0.15s**, bala tamaño 6.
+- Dispara **dos balas paralelas** que salen **alternas** (arriba y abajo, desplazadas 8px perpendicular al cañón): primero una, luego la otra (`GameScene.doubleGunSide`).
+- La tienda y la pantalla INFO la recogen automáticamente.
+
+### 94. Precio de la SHOTGUN ✅
+- `SHOTGUN.cost` de 200 → **350** en `config.js` (y actualizado en la pantalla INFO).
+
+### 95. Arma BAZOOKA ✅
+- Nueva arma en `CFG.WEAPONS` (sprites `bazooka-1.png`, `bazooka-2.png`, `bazooka-bala.png`): coste **450**, daño **5**, cadencia **2s**, bala **perforante** (atraviesa enemigos, no se destruye al impactar).
+- El proyectil usa el sprite `bazooka-bala.png` (`weapon.bulletImg`, soporte añadido en `Bullet.js`) a **3×** de tamaño (`bulletSize: 60`).
+- **Explosiones en cadena**: al disparar sueltan explosiones de **1/8 de pantalla** (radio 100) a lo largo de la línea de disparo que aparecen **de forma progresiva** siguiendo a la bala (`spawnBazookaExplosions` con `delayedCall` proporcional a la distancia); cada una hace **3 de daño** a enemigos y espadas del boss final (`damageEnemiesInRadius`).
+- **Cambio de aspecto**: al disparar el arma pasa a `bazooka-2.png` y, a la **mitad del cooldown**, vuelve a `bazooka-1.png` (`Player.setGunTexture`).
+
+### 96. Cambio de arma en mitad de la partida ✅
+- Botón **"CAMBIAR ARMA"** en el HUD (abajo, a la derecha del inventario; solo visible si hay más de un arma comprada).
+- `UIScene.openWeaponSwitch()`: **pausa la partida** (`GameScene.scene.pause()`), bloquea el disparo (`setUILocked`) y muestra una ventana con las armas compradas en **cajas** (estilo powerups: sprite + nombre + marca "EQUIPADA").
+- Al pulsar una caja se equipa (`GameScene.equipWeapon()`: `setWeapon` + `reloadWeapon` + `equippedWeapon`) y se cierra; botón **CERRAR** para salir. `closeWeaponSwitch()` reanuda la partida y desbloquea el disparo.
+- **Fix bug**: al abrir la ventana se añadían `null` al contenedor (`box.add([rect, icon, label, equipTag])`), lo que provocaba `Cannot read properties of null (reading 'type')`; se filtra con `.filter(Boolean)`.
+- Botón movido a la derecha para no solapar los powerups (`x = 340`).
+
+## Verificación
+- `node --check` de los archivos modificados: OK (`config.js`, `BootScene.js`, `GameScene.js`, `UIScene.js`, `ShopScene.js`, `Bullet.js`, `Player.js`, `SoundFX.js`).
+- Prueba en navegador pendiente: bienvenida + música de inicio, clics con sonido, DOUBLE GUN y BAZOOKA en tienda/INFO, cambio de arma en mitad de la partida (pausa/equipa/reanuda), y música de la tienda.

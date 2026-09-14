@@ -74,6 +74,12 @@ class Player {
     return Phaser.Math.DegToRad(this.gunAngle);
   }
 
+  // cambia el sprite del arma en el cañón (usado por la bazooka al disparar)
+  setGunTexture(key) {
+    if (!this.gunImg || !this.gunImg.visible) return;
+    this.gunImg.setTexture(key);
+  }
+
   getGunTipX() {
     return this.sprite.x + Math.cos(this.getGunRadians()) * 20;
   }

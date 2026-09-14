@@ -6,18 +6,23 @@ class Bullet {
     const baseSize = weapon ? weapon.bulletSize : CFG.BULLET_SIZE;
     const damage = weapon ? weapon.damage : 1;
     const size = baseSize * sizeFactor;
-    const texKey = 'bullet_' + bulletColor.toString(16) + '_' + Math.round(size);
 
-    // textura generada por código (solo una vez)
-    if (!scene.textures.exists(texKey)) {
-      const g = scene.make.graphics({ x: 0, y: 0 }, false);
-      g.fillStyle(bulletColor, 1);
-      g.fillRect(0, 0, size, size);
-      g.generateTexture(texKey, size, size);
-      g.destroy();
+    // las armas con sprite propio (p. ej. bazooka) usan su textura en vez del rectángulo
+    if (weapon && weapon.bulletImg) {
+      this.sprite = scene.physics.add.sprite(x, y, weapon.bulletImg);
+      this.sprite.setScale(size / 32);
+    } else {
+      const texKey = 'bullet_' + bulletColor.toString(16) + '_' + Math.round(size);
+      if (!scene.textures.exists(texKey)) {
+        const g = scene.make.graphics({ x: 0, y: 0 }, false);
+        g.fillStyle(bulletColor, 1);
+        g.fillRect(0, 0, size, size);
+        g.generateTexture(texKey, size, size);
+        g.destroy();
+      }
+      this.sprite = scene.physics.add.sprite(x, y, texKey);
     }
 
-    this.sprite = scene.physics.add.sprite(x, y, texKey);
     this.sprite.setOrigin(0.5, 0.5);
     this.sprite.setGravityY(0);
     this.sprite.body.setSize(size, size);
