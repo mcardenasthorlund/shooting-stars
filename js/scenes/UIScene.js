@@ -110,6 +110,23 @@ class UIScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(1, 0);
 
+    // ---- Modo ADMIN oculto: 5 toques rápidos sobre la zona de puntos lo activan ----
+    this.adminTaps = 0;
+    this.adminTapWindow = 0;
+    this.adminZone = this.add.rectangle(W - 90, H - 45, 180, 80, 0xffffff, 0)
+      .setInteractive();
+    this.adminZone.on('pointerdown', (pointer, localX, localY, event) => {
+      event.stopPropagation();
+      const now = this.time.now;
+      if (now - this.adminTapWindow > 1500) this.adminTaps = 0;
+      this.adminTapWindow = now;
+      this.adminTaps++;
+      if (this.adminTaps >= 5) {
+        this.adminTaps = 0;
+        this.openAdmin();
+      }
+    });
+
     // ---- Versión del juego (abajo a la izquierda) ----
     this.add.text(10, H - 10, 'v' + CFG.VERSION, {
       fontFamily: 'monospace',
@@ -535,6 +552,110 @@ class UIScene extends Phaser.Scene {
     if (!this.weaponWin) return;
     this.weaponWin.destroy();
     this.weaponWin = null;
+    const game = this.scene.get('GameScene');
+    if (game) {
+      game.setUILocked(false);
+      if (game.scene.isPaused()) game.scene.resume();
+    }
+  }
+
+  // abre el Modo ADMIN: pausa la partida y muestra un botón por cada comando especial
+  openAdmin() {
+    if (this.adminWin) return;
+    const game = this.scene.get('GameScene');
+    if (!game) return;
+    const W = CFG.WIDTH, H = CFG.HEIGHT;
+
+    // pausa el juego y bloquea el disparo mientras la ventana está abierta
+    game.setUILocked(true);
+    game.scene.pause();
+
+    this.adminWin = this.add.container(0, 0);
+    this.adminWin.setDepth(60);
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.85).setInteractive();
+    const winW = 500, winH = 380;
+    const winBg = this.add.rectangle(W / 2, H / 2, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0xffd93b, 1);
+    const title = this.add.text(W / 2, H / 2 - winH / 2 + 28, 'MODO ADMIN', {
+      fontFamily: 'monospace',
+      fontSize: '24px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    this.adminWin.add([overlay, winBg, title]);
+
+    // comandos especiales ya implementados en el juego
+    const commands = [
+      { label: 'INVOCAR BOSS', action: () => game.spawner.spawnBoss() },
+      { label: 'GAME OVER', action: () => game.endGame() },
+      { label: 'ENEMIGO VARIANTE', action: () => game.spawner.spawnVariantEnemy() },
+      { label: 'OBTENER POWER UP', action: () => game.powerUpSystem.spawnRandom() },
+      { label: 'VICTORIA BOSS', action: () => game.triggerVictory() },
+      { label: '+10000 PUNTOS', action: () => {
+        game.scoreSystem.add(10000);
+        game.events.emit('enemy-killed', 10000);
+      } },
+      { label: 'INICIAR BOSS FINAL', action: () => game.startFinalBoss() },
+      { label: 'ELIMINAR BOSS FINAL', action: () => game.forceFinalVictory() },
+    ];
+
+    const btnW = 220, btnH = 40, gap = 14;
+    const startY = H / 2 - 100;
+    commands.forEach((cmd, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = W / 2 - btnW / 2 - gap / 2 + col * (btnW + gap);
+      const y = startY + row * (btnH + gap);
+      const btn = this.add.container(x, y);
+      const rect = this.add.rectangle(0, 0, btnW, btnH, 0x1a2340, 1)
+        .setStrokeStyle(1, 0x4dd4ff, 1)
+        .setInteractive({ useHandCursor: true });
+      const text = this.add.text(0, 0, cmd.label, {
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        color: '#c8d2ea',
+        fontStyle: 'bold',
+      }).setOrigin(0.5, 0.5);
+      btn.add([rect, text]);
+      btn.setSize(btnW, btnH);
+      rect.on('pointerover', () => rect.setFillStyle(0x2a3a5a, 1));
+      rect.on('pointerout', () => rect.setFillStyle(0x1a2340, 1));
+      rect.on('pointerdown', (pointer, lx, ly, event) => {
+        event.stopPropagation();
+        if (this.game.sfx) this.game.sfx.click();
+        cmd.action();
+        this.closeAdmin();
+      });
+      this.adminWin.add(btn);
+    });
+
+    const closeBtn = this.add.container(W / 2, H / 2 + winH / 2 - 28);
+    const closeRect = this.add.rectangle(0, 0, 140, 34, 0x1a2338, 1)
+      .setStrokeStyle(1, 0xff5a5a, 1)
+      .setInteractive({ useHandCursor: true });
+    const closeText = this.add.text(0, 0, 'CERRAR', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#c8d2ea',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    closeBtn.add([closeRect, closeText]);
+    closeBtn.setSize(140, 34);
+    closeRect.on('pointerover', () => closeRect.setFillStyle(0x2a3a5a, 1));
+    closeRect.on('pointerout', () => closeRect.setFillStyle(0x1a2338, 1));
+    closeRect.on('pointerdown', (pointer, lx, ly, event) => {
+      event.stopPropagation();
+      if (this.game.sfx) this.game.sfx.click();
+      this.closeAdmin();
+    });
+    this.adminWin.add(closeBtn);
+  }
+
+  // cierra el Modo ADMIN, reanuda la partida y desbloquea el disparo
+  closeAdmin() {
+    if (!this.adminWin) return;
+    this.adminWin.destroy();
+    this.adminWin = null;
     const game = this.scene.get('GameScene');
     if (game) {
       game.setUILocked(false);
