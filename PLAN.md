@@ -94,6 +94,8 @@
 | 87 | Pantalla **WARNING** del boss final usa el sprite `warning-final-boss.png` (sustituye al texto WARNING y a la calavera procedural) | ✅ |
 | 88 | Matar al **BOSS FINAL** otorga **500 puntos** (`POINTS_PER_FINAL_BOSS`) | ✅ |
 | — | Versión actualizada a **0.9-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 101 | **Modo ADMIN** de pruebas: 5 toques seguidos sobre el contador de puntos abren una ventana con un botón por cada comando especial (invocar BOSS, Game Over, enemigo variante, power up, victoria del BOSS, +10.000 puntos, iniciar/eliminar el BOSS FINAL); al pulsar uno se ejecuta, se cierra y se reanuda la partida | ✅ |
+| — | Versión actualizada a **1.0.1-final-release** (`CFG.VERSION` y `sw.js`) | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -765,3 +767,23 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - **Impulso de separación**: durante los primeros **1.1s** (`separation`) el clon se lanza en vertical hacia el lado libre de la pantalla (`dashDir`, según si nace sobre o bajo el centro) con `dashSpeed` de 140–220 y velocidad horizontal **×1.6**, para separarse rápido del principal.
 - **Trayectoria propia**: oscilación distinta de la del original (amplitud 35–85, frecuencia 1.5–2.6, fase aleatoria) para no viajar en paralelo y ser más difícil de derribar.
 - `node --check` de los archivos modificados: OK (`BootScene.js`, `Bullet.js`, `Enemy4.js`).
+
+## Sesión actual (Modo ADMIN de pruebas) — v1.0.1-final-release
+
+### 101. Modo ADMIN ✅
+- **Objetivo**: poder probar los comandos especiales en móvil sin teclado físico.
+- **Activación**: en la `UIScene`, una zona invisible interactiva (`adminZone`, un rectángulo transparente sobre el contador de puntos, abajo a la derecha) cuenta los **toques** (`pointerdown`) dentro de una ventana de **1.5s**; al acumular **5 toques** se abre el Modo ADMIN.
+- `UIScene.openAdmin()`: **pausa la partida** (`GameScene.scene.pause()`), bloquea el disparo (`setUILocked(true)`) y muestra la ventana **"MODO ADMIN"** (mismo patrón que `openWeaponSwitch`) con un **botón por cada comando**:
+  - **INVOCAR BOSS** → `spawner.spawnBoss()` (Ctrl+D)
+  - **GAME OVER** → `endGame()` (Ctrl+K)
+  - **ENEMIGO VARIANTE** → `spawner.spawnVariantEnemy()` (Alt+N)
+  - **OBTENER POWER UP** → `powerUpSystem.spawnRandom()` (Ctrl+B)
+  - **VICTORIA BOSS** → `triggerVictory()` (Shift+Z)
+  - **+10000 PUNTOS** → suma 10.000 puntos (Shift+X)
+  - **INICIAR BOSS FINAL** → `startFinalBoss()` (Shift+C)
+  - **ELIMINAR BOSS FINAL** → `forceFinalVictory()` (Shift+V)
+- Al pulsar un botón se ejecuta el comando y se cierra la ventana; botón **CERRAR** para salir sin ejecutar nada.
+- `UIScene.closeAdmin()`: destruye la ventana, **reanuda la partida** (`GameScene.scene.resume()`) y desbloquea el disparo (`setUILocked(false)`).
+- Versión actualizada a **1.0.1-final-release** (`CFG.VERSION` en `config.js` y `VERSION` en `sw.js`).
+- `node --check` de los archivos modificados: OK (`UIScene.js`, `config.js`, `sw.js`).
+- Prueba en navegador pendiente: 5 toques rápidos sobre los puntos, apertura/pausa, ejecución de cada comando, cierre y reanudación.
