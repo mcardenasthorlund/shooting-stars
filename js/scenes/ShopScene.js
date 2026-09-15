@@ -362,7 +362,7 @@ class ShopScene extends Phaser.Scene {
     this.descTitle.setText(w.label);
     this.descText.setText(
       'SHOOT: ' + w.damage + ' daño\n' +
-      'TIME PER SHOOT: ' + (w.cooldown / 1000).toFixed(1) + ' seconds\n' +
+      'TPS: ' + (w.cooldown / 1000).toFixed(1) + ' secs\n' +
       'COST: ' + w.cost + ' points'
     );
     this.warningText.setText('');

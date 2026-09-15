@@ -294,6 +294,9 @@ class BootScene extends Phaser.Scene {
     overlay.fillStyle(0x05070f, 0.92);
     overlay.fillRect(0, 0, W, H);
 
+    // Bloquea el clic hacia los botones (INFO/CREDITOS) que quedan detrás.
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setInteractive();
+
     const slides = [
       { img: 'intro_p1', text: 'A nosotros nos dieron la tarea de explorar un planeta que apenas acababa de ser descubierto' },
       { img: 'intro_p2', text: 'Montamos nuestro campamento y nos dimos cuenta que había seres vivos no descubiertos' },

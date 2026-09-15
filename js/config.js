@@ -1,5 +1,5 @@
 const CFG = Object.freeze({
-  VERSION: '1.0.3-final-release',
+  VERSION: '1.0.4-final-release',
   WIDTH: 800,
   HEIGHT: 600,
 
