@@ -34,6 +34,7 @@ class ShopScene extends Phaser.Scene {
 
     this.buildMenu();
     this.buildShop();
+    this.buildRoulette();
     this.showMenu();
   }
 
@@ -140,6 +141,10 @@ class ShopScene extends Phaser.Scene {
 
     this.shop.add([title, this.pointsText, this.equipText]);
 
+    // botón APUESTA (ruleta) a la izquierda del contador de puntos
+    this.betBtn = this.makeButton(this.shop, W - 360, 30, 150, 40, '🎰 APUESTA', 0x8a1a4a, () => this.showRoulette());
+    this.betBtn.setDepth(3);
+
     // columna izquierda con las armas (ordenadas por coste; BLASTER gratis, primera)
     const buyable = Object.keys(CFG.WEAPONS)
       .sort((a, b) => CFG.WEAPONS[a].cost - CFG.WEAPONS[b].cost);
@@ -226,6 +231,285 @@ class ShopScene extends Phaser.Scene {
 
     // botón salir (abajo a la derecha)
     this.exitBtn = this.makeButton(this.shop, W - 90, H - 40, 150, 44, 'SALIR', 0x5a3a7a, () => this.showMenu());
+  }
+
+  // ---- Ruleta de apuestas ----
+  buildRoulette() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+    this.roulette = this.add.container(0, 0);
+    this.selectedColor = null;
+
+    // fondo oscuro propio de la ruleta
+    this.rouletteOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.96);
+    this.roulette.add(this.rouletteOverlay);
+
+    const title = this.add.text(W / 2, 45, 'APUESTA', {
+      fontFamily: 'monospace',
+      fontSize: '32px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    this.roulette.add(title);
+
+    // rueda de la ruleta (más pequeña para dejar sitio al campo de puntos)
+    this.rouletteWheel = new RouletteWheel(this, W / 2, 215);
+    this.roulette.add(this.rouletteWheel.wheel);
+    this.roulette.add(this.rouletteWheel.pointer);
+
+    // etiqueta + campo numérico de la apuesta
+    this.betLabel = this.add.text(W / 2, 338, 'INSERTAR PUNTOS (máx: ' + this.rouletteMax() + ')', {
+      fontFamily: 'monospace',
+      fontSize: '15px',
+      color: '#c8d2ea',
+    }).setOrigin(0.5, 0.5);
+    this.roulette.add(this.betLabel);
+
+    // campo numérico HTML superpuesto sobre el canvas en la posición de la apuesta
+    // (se reutiliza si ya existe: el DOM no se destruye al reiniciar la escena)
+    this.betInput = document.getElementById('roulette-bet-input');
+    if (!this.betInput) {
+      this.betInput = document.createElement('input');
+      this.betInput.type = 'number';
+      this.betInput.min = '0';
+      this.betInput.step = '1';
+      this.betInput.inputMode = 'numeric';
+      this.betInput.id = 'roulette-bet-input';
+      document.getElementById('game').appendChild(this.betInput);
+    }
+    this.betInput.style.display = 'none';
+    this.positionBetInput();
+
+    // selección del color
+    this.colorBtns = {};
+    const redBtn = this.makeButton(this.roulette, W / 2 - 80, 440, 140, 46, 'ROJO', CFG.ROULETTE_RED, () => this.selectColor('red'));
+    const blackBtn = this.makeButton(this.roulette, W / 2 + 80, 440, 140, 46, 'NEGRO', CFG.ROULETTE_BLACK, () => this.selectColor('black'));
+    this.colorBtns.red = redBtn;
+    this.colorBtns.black = blackBtn;
+    this.colorBtns.redTick = this.makeColorTick(redBtn, 'red');
+    this.colorBtns.blackTick = this.makeColorTick(blackBtn, 'black');
+
+    // CONFIRMAR / CANCELAR
+    this.rouletteConfirm = this.makeButton(this.roulette, W / 2 - 100, 505, 160, 46, 'CONFIRMAR', 0x2a8a4a, () => this.confirmBet());
+    this.rouletteCancel = this.makeButton(this.roulette, W / 2 + 100, 505, 160, 46, 'CANCELAR', 0x8a2a2a, () => this.closeRoulette());
+
+    // ventana modal informativa (avisos y resultado)
+    this.buildRouletteModal();
+
+    this.roulette.setVisible(false);
+  }
+
+  // ventana modal reutilizable de la ruleta (avisos / resultado)
+  buildRouletteModal() {
+    const { WIDTH: W, HEIGHT: H } = CFG;
+    this.rouletteModal = this.add.container(0, 0);
+
+    // overlay oscuro que bloquea la interacción con la ruleta de debajo
+    this.rouletteModalOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.72)
+      .setInteractive();
+    this.rouletteModal.add(this.rouletteModalOverlay);
+
+    // panel central
+    const panel = this.add.rectangle(W / 2, H / 2, 480, 260, 0x1a2a4a, 0.98)
+      .setStrokeStyle(3, 0x4a6a9a).setOrigin(0.5);
+    this.rouletteModal.add(panel);
+
+    this.rouletteModalTitle = this.add.text(W / 2, H / 2 - 90, '', {
+      fontFamily: 'monospace',
+      fontSize: '26px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    this.rouletteModal.add(this.rouletteModalTitle);
+
+    this.rouletteModalMsg = this.add.text(W / 2, H / 2 - 10, '', {
+      fontFamily: 'monospace',
+      fontSize: '18px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: 400 },
+    }).setOrigin(0.5, 0.5);
+    this.rouletteModal.add(this.rouletteModalMsg);
+
+    // botón (rect + texto) del modal
+    const btnRect = this.add.rectangle(0, 0, 190, 46, 0x2a8a4a).setInteractive({ useHandCursor: true });
+    const btnTxt = this.add.text(0, 0, 'OK', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.rouletteModalBtn = this.add.container(W / 2, H / 2 + 80, [btnRect, btnTxt]);
+    this.rouletteModalBtnRect = btnRect;
+    this.rouletteModalBtnTxt = btnTxt;
+    this.rouletteModal.add(this.rouletteModalBtn);
+
+    this.rouletteModal.setDepth(20);
+    this.rouletteModal.setVisible(false);
+    this.roulette.add(this.rouletteModal);
+  }
+
+  showRouletteModal(title, msg, color, btnLabel, onClose) {
+    this.hideBetInput();
+    this.rouletteModalTitle.setText(title).setColor(color);
+    this.rouletteModalMsg.setText(msg);
+    this.rouletteModalBtnTxt.setText(btnLabel);
+    this.rouletteModalBtnRect.removeAllListeners('pointerdown');
+    this.rouletteModalBtnRect.on('pointerdown', (pointer, lx, ly, event) => {
+      if (this.game.sfx) this.game.sfx.click();
+      onClose();
+    });
+    this.rouletteModal.setVisible(true);
+  }
+
+  closeRouletteModal() {
+    this.rouletteModal.setVisible(false);
+  }
+
+  // posiciona el campo numérico sobre el canvas siguiendo el Scale.FIT
+  positionBetInput() {
+    const sm = this.game.scale;
+    if (!sm || !sm.parentSize || !sm.displaySize) return;
+    const s = sm.displaySize.width / CFG.WIDTH;
+    const ox = Math.floor((sm.parentSize.width - sm.displaySize.width) / 2);
+    const oy = Math.floor((sm.parentSize.height - sm.displaySize.height) / 2);
+    const cx = ox + (CFG.WIDTH / 2) * s;
+    const cy = oy + 385 * s;
+    this.betInput.style.width = (220 * s) + 'px';
+    this.betInput.style.height = (40 * s) + 'px';
+    this.betInput.style.left = (cx - 110 * s) + 'px';
+    this.betInput.style.top = (cy - 20 * s) + 'px';
+  }
+
+  showBetInput() {
+    this.betInput.style.display = 'block';
+    this.positionBetInput();
+  }
+
+  hideBetInput() {
+    this.betInput.style.display = 'none';
+  }
+
+  // lee el valor numérico del campo (0 si está vacío o no válido)
+  getBetFromInput() {
+    const raw = parseInt(this.betInput.value, 10);
+    return isNaN(raw) ? 0 : raw;
+  }
+
+  // marca (tick/borde) sobre el botón del color seleccionado
+  makeColorTick(btn, color) {
+    const border = this.add.rectangle(0, 0, 148, 52, 0x000000, 0).setStrokeStyle(3, 0xffffff).setOrigin(0.5);
+    border.setVisible(false);
+    btn.add(border);
+    return border;
+  }
+
+  // puntos actuales del jugador (máximo apostable)
+  rouletteMax() {
+    const game = this.gameScene;
+    return game ? game.scoreSystem.score : 0;
+  }
+
+  selectColor(color) {
+    if (this.rouletteWheel.spinning) return;
+    this.selectedColor = color;
+    this.colorBtns.redTick.setVisible(color === 'red');
+    this.colorBtns.blackTick.setVisible(color === 'black');
+  }
+
+  confirmBet() {
+    if (this.rouletteWheel.spinning) return;
+    const max = this.rouletteMax();
+    const bet = this.getBetFromInput();
+    if (!this.selectedColor) {
+      this.showRouletteModal(
+        'APUESTA',
+        'Elige ROJO o NEGRO para apostar.',
+        '#ffd93b',
+        'OK',
+        () => { this.closeRouletteModal(); this.showBetInput(); }
+      );
+      return;
+    }
+    if (bet < CFG.ROULETTE_MIN_BET || bet > max) {
+      this.showRouletteModal(
+        'APUESTA NO VÁLIDA',
+        'Introduce una cantidad entre ' + CFG.ROULETTE_MIN_BET + ' y ' + max + ' puntos.',
+        '#ff3b3b',
+        'OK',
+        () => { this.closeRouletteModal(); this.showBetInput(); }
+      );
+      return;
+    }
+
+    this.setRouletteInput(false);
+    this.hideBetInput();
+
+    const chosen = this.selectedColor;
+
+    this.rouletteWheel.spin((resultColor) => {
+      const game = this.gameScene;
+      let title, msg, win;
+
+      if (resultColor === 'green') {
+        // casilla verde: premio especial x10, gana siempre (independiente del color elegido)
+        win = true;
+        const prize = bet * CFG.ROULETTE_GREEN_MULT;
+        if (game) game.scoreSystem.gain(prize);
+        title = '¡CASILLA VERDE!';
+        msg = '¡Cayó en la casilla VERDE! Ganas x' + CFG.ROULETTE_GREEN_MULT + ': +' + prize + ' puntos.';
+      } else if (resultColor === chosen) {
+        win = true;
+        if (game) game.scoreSystem.gain(bet);
+        title = '¡HAS GANADO!';
+        msg = '¡Cayó en ' + resultColor.toUpperCase() + '! Ganas +' + bet + ' puntos.';
+      } else {
+        win = false;
+        if (game) game.scoreSystem.spend(bet);
+        title = 'HAS PERDIDO';
+        msg = 'Cayó en ' + resultColor.toUpperCase() + '. Pierdes ' + bet + ' puntos.';
+      }
+
+      this.updatePoints();
+      // ventana informativa con el resultado y botón para volver a la tienda
+      this.showRouletteModal(
+        title,
+        msg,
+        win ? '#39ff6e' : '#ff3b3b',
+        'VOLVER A LA TIENDA',
+        () => this.closeRoulette()
+      );
+    });
+  }
+
+  // habilita/deshabilita los botones de la ruleta durante el giro
+  setRouletteInput(enabled) {
+    this.setButtonEnabled(this.rouletteConfirm, enabled, 0x2a8a4a);
+    this.setButtonEnabled(this.rouletteCancel, enabled, 0x8a2a2a);
+  }
+
+  showRoulette() {
+    this.cancelShopSwap();
+    this.shop.setVisible(false);
+    this.menu.setVisible(false);
+    this.selectedColor = null;
+    this.colorBtns.redTick.setVisible(false);
+    this.colorBtns.blackTick.setVisible(false);
+    this.closeRouletteModal();
+    this.betLabel.setText('INSERTAR PUNTOS (máx: ' + this.rouletteMax() + ')');
+    this.betInput.value = '';
+    this.rouletteConfirm.setVisible(true);
+    this.rouletteCancel.setVisible(true);
+    this.showBetInput();
+    this.setRouletteInput(true);
+    this.roulette.setVisible(true);
+  }
+
+  closeRoulette() {
+    this.hideBetInput();
+    this.closeRouletteModal();
+    this.roulette.setVisible(false);
+    this.scheduleShopSwap();
+    this.showShop();
   }
 
   // ajusta el sprite del arma de la ventana de información al ancho disponible

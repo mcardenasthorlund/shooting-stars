@@ -116,6 +116,16 @@ const CFG = Object.freeze({
   POINTS_PER_VARIANT: 3,
   POINTS_PER_BOSS: 10,
 
+  // ---- Ruleta de apuestas (tienda) ----
+  ROULETTE_CELLS: 21,           // nº de casillas de la ruleta (10 rojas / 10 negras / 1 verde)
+  ROULETTE_RED: 0xcf2233,       // color de la casilla roja
+  ROULETTE_BLACK: 0x1a1a22,     // color de la casilla negra
+  ROULETTE_GREEN: 0x1fd64e,     // color de la casilla verde (multiplica x10)
+  ROULETTE_GREEN_MULT: 10,      // multiplicador de la casilla verde
+  ROULETTE_WHEEL_RADIUS: 100,   // radio exterior de la ruleta
+  ROULETTE_MIN_BET: 1,          // apuesta mínima
+  ROULETTE_SPIN_DURATION: 2600, // ms que tarda la ruleta en girar
+
   // ---- Spawn ----
   BASE_SPAWN_INTERVAL: 1600,    // ms en t=0
   MIN_SPAWN_INTERVAL: 350,      // ms mínimo al pasar el tiempo

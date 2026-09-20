@@ -55,6 +55,28 @@ body {
   image-rendering: pixelated;
 }
 
+/* campo numérico de la ruleta (apuesta) superpuesto al canvas */
+#roulette-bet-input {
+  position: absolute;
+  z-index: 5;
+  background: #0a0d1c;
+  color: #ffffff;
+  border: 2px solid #4a6a9a;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: manipulation;
+}
+#roulette-bet-input:focus {
+  outline: none;
+  border-color: #ffd93b;
+}
+
 /* pantallas pequeñas / táctiles: bordes más discretos */
 @media (max-width: 900px) {
   #game canvas {
