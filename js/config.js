@@ -87,6 +87,31 @@ const CFG = Object.freeze({
   // ---- BOSS FINAL (oleada 5) ----
   TOTAL_WAVES: 5,               // el juego tiene 5 oleadas; la 5ª es el boss final
   FINAL_BOSS_LIFE: 750,         // vida del boss final (solo le afectan las espadas devueltas)
+
+  // ---- ENEMIGO DE RECOMPENSA (una vez por oleada, MEDIO+) ----
+  REWARD_ENEMY_SIZE: 64,        // tamaño (px) del sprite
+  REWARD_ENEMY_TIME: 30000,     // ms que permanece en pantalla antes de ser absorbido
+  REWARD_ENEMY_SPAWN_TIME: 25000, // ms de la oleada tras los que aparece
+  REWARD_ENEMY_X: 520,          // X fijo (solo se mueve en vertical)
+  REWARD_ENEMY_AMP: 80,         // amplitud del vaivén vertical
+  REWARD_ENEMY_FREQ: 0.8,       // frecuencia del vaivén vertical
+  REWARD_ENEMY_COLOR: 0x4dd4ff, // color del cristal/estrella procedural
+  REWARD_WHEEL_VIEW_W: 600,     // ancho (px) del viewport de la cinta de premios
+
+  // premios de la cinta de recompensa (100/250/500 pts, power ups y BAZOOKA)
+  REWARD_OPTIONS: Object.freeze([
+    { type: 'POINTS_100', label: '100 PTS', color: 0x39ff6e },
+    { type: 'POINTS_250', label: '250 PTS', color: 0xffd93b },
+    { type: 'POINTS_500', label: '500 PTS', color: 0xff8b39 },
+    { type: 'BIG_BOY', label: 'BIG BOY', color: 0xffd93b },
+    { type: 'HEALING', label: 'HEALING', color: 0x39ff6e },
+    { type: 'BIG_BOOM', label: 'BIG BOOM', color: 0xff8b39 },
+    { type: 'SHIELD', label: 'SHIELD', color: 0x4dd4ff },
+    { type: 'TIMESTOP', label: 'TIMESTOP', color: 0x9aa7c8 },
+    { type: 'GRANADE', label: 'GRANADE', color: 0x8a5a2a },
+    { type: 'BLACK_HOLE', label: 'BLACK HOLE', color: 0x7a3af0 },
+    { type: 'BAZOOKA', label: 'BAZOOKA', color: 0xff3b3b },
+  ]),
   FINAL_BOSS_WIDTH: 200,        // ancho (px) de la imagen del boss final (200x600, proporción)
   FINAL_BOSS_HEIGHT: 600,       // alto (px): ocupa el alto completo de la pantalla
   FINAL_BOSS_X: 700,            // centro X del boss final (pegado al borde derecho: W - width/2)

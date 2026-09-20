@@ -124,6 +124,7 @@ class GameScene extends Phaser.Scene {
     });
     this.input.keyboard.on('keydown-N', (event) => {
       if (event.altKey) this.spawner.spawnVariantEnemy();
+      if (event.shiftKey) this.spawner.spawnRewardEnemy(true);
     });
     this.input.keyboard.on('keydown-Z', (event) => {
       if (event.shiftKey) this.triggerVictory();
@@ -180,6 +181,8 @@ class GameScene extends Phaser.Scene {
     if (handler.damage(amount)) {
       if (handler instanceof Boss) {
         this.onBossKilled(handler, sprite);
+      } else if (handler instanceof RewardEnemy) {
+        this.onRewardEnemyKilled(handler, sprite);
       } else {
         this.spawnExplosion(sprite.x, sprite.y, CFG.ENEMY_EXPLOSION_RADIUS);
         if (this.game.sfx) this.game.sfx.explosion();
@@ -187,6 +190,17 @@ class GameScene extends Phaser.Scene {
         this.events.emit('enemy-killed', handler.points);
       }
     }
+  }
+
+  // el enemigo de recompensa eliminado abre la cinta de premios (sin puntos directos)
+  onRewardEnemyKilled(handler, sprite) {
+    this.spawnExplosion(sprite.x, sprite.y, CFG.REWARD_ENEMY_SIZE);
+    if (this.game.sfx) this.game.sfx.explosion();
+    // diferido para salir del callback de físicas (patrón de openShop)
+    this.time.delayedCall(0, () => {
+      const ui = this.scene.get('UIScene');
+      if (ui && ui.openRewardWheel) ui.openRewardWheel();
+    });
   }
 
   // impacto directo de una granada: 10 de daño + explosión en área
@@ -1129,6 +1143,53 @@ class GameScene extends Phaser.Scene {
 
   spawnExplosion(x, y, size) {
     this.explosions.push(new Explosion(this, x, y, size * 0.9));
+  }
+
+  // remolino: espiral azul-cian que se encoge (absorción) o crece (aparición)
+  spawnWhirlpool(x, y, grow = false) {
+    const g = this.add.graphics();
+    g.setPosition(x, y);
+    const R = CFG.REWARD_ENEMY_SIZE;
+    const color = CFG.REWARD_ENEMY_COLOR;
+    const spiral = (radius, turns) => {
+      g.lineStyle(4, color, 0.9);
+      g.beginPath();
+      const steps = 60;
+      let a = 0, r = radius;
+      for (let i = 0; i <= steps; i++) {
+        a = (i / steps) * Math.PI * 2 * turns;
+        r = radius - (radius * i / steps) * 0.9;
+        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+        if (i === 0) g.moveTo(px, py);
+        else g.lineTo(px, py);
+      }
+      g.strokePath();
+    };
+    spiral(R, 3);
+    g.setDepth(8);
+    if (grow) {
+      g.setScale(0.15);
+      g.setAlpha(0.9);
+      this.tweens.add({
+        targets: g,
+        scale: 1,
+        rotation: Math.PI * 4,
+        alpha: 0,
+        duration: 800,
+        ease: 'Back.easeOut',
+        onComplete: () => g.destroy(),
+      });
+    } else {
+      this.tweens.add({
+        targets: g,
+        rotation: Math.PI * 4,
+        scale: 0.15,
+        alpha: 0,
+        duration: 900,
+        ease: 'Linear',
+        onComplete: () => g.destroy(),
+      });
+    }
   }
 
 // explosiones en cadena de la bazooka a lo largo de la línea de disparo,

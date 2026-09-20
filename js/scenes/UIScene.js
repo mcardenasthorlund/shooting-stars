@@ -583,6 +583,218 @@ class UIScene extends Phaser.Scene {
     }
   }
 
+  // ---- Cinta de premios (enemigo de recompensa eliminado) ----
+  openRewardWheel() {
+    if (this.rewardWin) return;
+    const game = this.scene.get('GameScene');
+    if (!game) return;
+    const W = CFG.WIDTH, H = CFG.HEIGHT;
+
+    // pausa el juego y bloquea el disparo mientras la cinta está abierta
+    game.setUILocked(true);
+    game.scene.pause();
+
+    this.rewardWin = this.add.container(0, 0);
+    this.rewardWin.setDepth(55);
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.82).setInteractive();
+    const winW = 720, winH = 300;
+    const winBg = this.add.rectangle(W / 2, H / 2, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0x4dd4ff, 1);
+    const title = this.add.text(W / 2, H / 2 - winH / 2 + 28, '¡RECOMPENSA!', {
+      fontFamily: 'monospace',
+      fontSize: '22px',
+      color: '#ffd93b',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0.5);
+    this.rewardWin.add([overlay, winBg, title]);
+
+    // viewport de la cinta + máscara bitmap (textura reutilizable para no fugarse)
+    const viewW = CFG.REWARD_WHEEL_VIEW_W, viewH = 84, viewY = H / 2 - 8;
+    const viewport = this.add.rectangle(W / 2, viewY, viewW, viewH, 0x0a0d1c, 1).setStrokeStyle(2, 0x4dd4ff, 1);
+    if (!this.textures.exists('reward_mask')) {
+      const vg = this.make.graphics({ x: 0, y: 0 }, false);
+      vg.fillStyle(0xffffff, 1);
+      vg.fillRect(0, 0, viewW, viewH);
+      vg.generateTexture('reward_mask', viewW, viewH);
+      vg.destroy();
+    }
+    const maskImg = this.add.image(W / 2, viewY, 'reward_mask').setVisible(false);
+    const mask = maskImg.createBitmapMask();
+    this.rewardWin.add(maskImg);
+
+    // cinta con las casillas: bucle de repeticiones para que sea continua
+    // (nunca hay zonas vacías y los extremos se "unen" en el final)
+    const cellW = 110, gap = 8, REPEAT = 5;
+    this.rewardCellW = cellW;
+    this.rewardGap = gap;
+    this.rewardRepeat = REPEAT;
+    this.rewardOptions = CFG.REWARD_OPTIONS;
+    const len = this.rewardOptions.length;
+    const loopW = len * (cellW + gap);
+    const totalW = REPEAT * loopW;
+
+    this.rewardBelt = this.add.container(W / 2 - totalW / 2, viewY);
+    this.rewardBelt.setMask(mask);
+
+    for (let r = 0; r < REPEAT; r++) {
+      this.rewardOptions.forEach((opt, i) => {
+        const idx = r * len + i;
+        const cell = this.add.container(idx * (cellW + gap), 0);
+        const rect = this.add.rectangle(0, 0, cellW, viewH - 8, opt.color, 0.85).setOrigin(0.5);
+        const imgKey = this.getRewardImg(opt);
+        if (imgKey && this.textures.exists(imgKey)) {
+          const src = this.textures.get(imgKey).getSourceImage();
+          const maxW = cellW - 18, maxH = viewH - 24;
+          const scale = Math.min(maxW / src.width, maxH / src.height);
+          const icon = this.add.image(0, 0, imgKey).setScale(scale);
+          cell.add([rect, icon]);
+        } else {
+          const label = this.add.text(0, 0, opt.label, {
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: cellW - 10 },
+          }).setOrigin(0.5, 0.5);
+          cell.add([rect, label]);
+        }
+        this.rewardBelt.add(cell);
+      });
+    }
+    this.rewardWin.add([viewport, this.rewardBelt]);
+
+    // banda de desplazamiento continuo: la cinta siempre se mantiene dentro de un
+    // tramo de un bucle (mod loopW), de modo que avanza hacia la derecha sin parar
+    // y sin zonas en negro (los elementos entran por el borde izquierdo)
+    const viewHalf = CFG.REWARD_WHEEL_VIEW_W / 2;
+    const minX = CFG.WIDTH / 2 + viewHalf - totalW + 10;
+    this.rewardLoopW = loopW;
+    this.rewardMinX = minX;
+    this.rewardBelt.x = minX;
+
+    // puntero fijo sobre la cinta
+    const pointer = this.add.graphics();
+    pointer.setPosition(W / 2, viewY - viewH / 2 - 6);
+    pointer.fillStyle(0xffd93b, 1);
+    pointer.fillTriangle(-10, 0, 10, 0, 0, 14);
+    this.rewardWin.add(pointer);
+
+    // texto del resultado
+    this.rewardResultText = this.add.text(W / 2, H / 2 + 88, '', {
+      fontFamily: 'monospace',
+      fontSize: '22px',
+      color: '#39ff6e',
+      fontStyle: 'bold',
+      align: 'center',
+    }).setOrigin(0.5, 0.5);
+    this.rewardWin.add(this.rewardResultText);
+
+    this.rewardSpinning = false;
+
+    // la ruleta arranca sola tras 0.5s
+    this.rewardOpenTimer = this.time.delayedCall(500, () => this.spinReward());
+  }
+
+  // un giro: la cinta avanza SIEMPRE hacia la derecha (los elementos entran por el
+// borde izquierdo) y se envuelve módulo loopW, por lo que pasa por muchas casillas
+// sin cambiar de dirección ni dejar zonas en negro hasta asentar en la elegida.
+  spinReward() {
+    if (this.rewardSpinning) return;
+    this.rewardSpinning = true;
+
+    const cellW = this.rewardCellW, gap = this.rewardGap;
+    const len = this.rewardOptions.length;
+
+    // índice aleatorio, garantizando que no se repita el mismo premio que el anterior
+    let o = Phaser.Math.Between(0, len - 1);
+    if (this.lastRewardIndex !== undefined) {
+      let tries = 0;
+      while (o === this.lastRewardIndex && tries < len) {
+        o = Phaser.Math.Between(0, len - 1);
+        tries++;
+      }
+    }
+    this.lastRewardIndex = o;
+
+    const cellWidth = cellW + gap;
+    const loopW = this.rewardLoopW;
+    const bandMin = this.rewardMinX;
+
+    // base donde la casilla o queda centrada bajo el puntero, plegada al tramo de banda
+    const baseX = CFG.WIDTH / 2 - (o * cellWidth + cellW / 2);
+    const target = bandMin + (((baseX - bandMin) % loopW) + loopW) % loopW;
+
+    const start = this.rewardBelt.x;
+    // distancia hacia delante (derecha) dentro de la banda hasta alcanzar target
+    const delta = ((target - start) % loopW + loopW) % loopW;
+    // vueltas completas que atraviesa antes de parar (incertidumbre)
+    const K = 5;
+    const endP = start + K * loopW + delta;
+
+    this.tweens.add({
+      targets: { p: start },
+      p: endP,
+      duration: 2400,
+      ease: 'Cubic.easeOut',
+      onUpdate: (tw) => {
+        const p = tw.getValue();
+        this.rewardBelt.x = bandMin + (((p - bandMin) % loopW) + loopW) % loopW;
+      },
+      onComplete: () => {
+        this.rewardBelt.x = target;
+        this.applyReward(this.rewardOptions[o]);
+      },
+    });
+  }
+
+  // devuelve la textura del icono del premio (o null si no tiene icono)
+  getRewardImg(opt) {
+    if (opt.type === 'POINTS_100') return 'point_100_img';
+    if (opt.type === 'POINTS_250') return 'point_250_img';
+    if (opt.type === 'POINTS_500') return 'point_500_img';
+    if (opt.type === 'BAZOOKA') return CFG.WEAPONS.BAZOOKA.img;
+    const pu = CFG.POWER_UPS[opt.type];
+    return pu ? pu.img : null;
+  }
+
+  applyReward(opt) {
+    const game = this.scene.get('GameScene');
+    let text;
+    if (opt.type.startsWith('POINTS_')) {
+      const n = parseInt(opt.type.split('_')[1], 10);
+      game.scoreSystem.gain(n);
+      text = '¡+' + n + ' PUNTOS!';
+    } else if (opt.type === 'BAZOOKA') {
+      // se añade a las armas compradas (sin equipar)
+      if (!game.game.ownedWeapons) game.game.ownedWeapons = [];
+      if (game.game.ownedWeapons.indexOf('BAZOOKA') === -1) game.game.ownedWeapons.push('BAZOOKA');
+      text = '¡ARMA OBTENIDA: BAZOOKA!';
+    } else {
+      // power up → inventario (FIFO, el HUD se refresca solo)
+      game.powerUpSystem.collect(opt.type);
+      const meta = CFG.POWER_UPS[opt.type];
+      text = '¡NUEVO POWER UP: ' + (meta ? meta.label : opt.type) + '!';
+    }
+    this.rewardResultText.setText(text);
+    // muestra el premio 2s y luego cierra automáticamente y reanuda
+    this.rewardCloseTimer = this.time.delayedCall(2000, () => this.closeRewardWheel());
+  }
+
+  closeRewardWheel() {
+    if (!this.rewardWin) return;
+    if (this.rewardOpenTimer) { this.rewardOpenTimer.remove(false); this.rewardOpenTimer = null; }
+    if (this.rewardCloseTimer) { this.rewardCloseTimer.remove(false); this.rewardCloseTimer = null; }
+    this.rewardWin.destroy();
+    this.rewardWin = null;
+    this.rewardBelt = null;
+    const game = this.scene.get('GameScene');
+    if (game) {
+      game.setUILocked(false);
+      if (game.scene.isPaused()) game.scene.resume();
+    }
+  }
+
   // abre el Modo ADMIN: pausa la partida y muestra un botón por cada comando especial
   openAdmin() {
     if (this.adminWin) return;
@@ -598,7 +810,7 @@ class UIScene extends Phaser.Scene {
     this.adminWin.setDepth(60);
 
     const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x05070f, 0.85).setInteractive();
-    const winW = 500, winH = 380;
+    const winW = 500, winH = 430;
     const winBg = this.add.rectangle(W / 2, H / 2, winW, winH, 0x0d1424, 1).setStrokeStyle(2, 0xffd93b, 1);
     const title = this.add.text(W / 2, H / 2 - winH / 2 + 28, 'MODO ADMIN', {
       fontFamily: 'monospace',
@@ -611,6 +823,7 @@ class UIScene extends Phaser.Scene {
     // comandos especiales ya implementados en el juego
     const commands = [
       { label: 'INVOCAR BOSS', action: () => game.spawner.spawnBoss() },
+      { label: 'ENEMIGO RECOMPENSA', action: () => game.spawner.spawnRewardEnemy(true) },
       { label: 'GAME OVER', action: () => game.endGame() },
       { label: 'ENEMIGO VARIANTE', action: () => game.spawner.spawnVariantEnemy() },
       { label: 'OBTENER POWER UP', action: () => game.powerUpSystem.spawnRandom() },

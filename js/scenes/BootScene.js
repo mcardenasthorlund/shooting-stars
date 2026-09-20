@@ -93,6 +93,9 @@ class BootScene extends Phaser.Scene {
     this.load.image('planet2', 'assets/Planeta_Fondo_N2.png');
     this.load.image('planet3', 'assets/Planeta_Fondo_N3.png');
     this.load.image('back_planet_img', 'assets/Back_Planet.png');
+    this.load.image('point_100_img', 'assets/Point_100.png');
+    this.load.image('point_250_img', 'assets/Point_250.png');
+    this.load.image('point_500_img', 'assets/Point_500.png');
     this.load.audio('music', 'assets/audio/musica.mp3');
     this.load.audio('inicio_music', 'assets/audio/inicio.mp3');
     this.load.audio('tienda_music', 'assets/audio/tienda.mp3');

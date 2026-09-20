@@ -6,6 +6,7 @@ class EnemySpawner {
     this.bossSpawned = false;
     this.bossActive = false;
     this.boss = null;
+    this.rewardSpawned = false;
   }
 
   currentInterval(elapsed) {
@@ -20,11 +21,32 @@ class EnemySpawner {
       this.spawnBoss();
     }
 
+    // enemigo de recompensa: una vez por oleada (MEDIO+) a los 25s; nunca en la oleada final
+    if (!this.rewardSpawned &&
+        this.scene.wave < CFG.TOTAL_WAVES &&
+        this.scene.baseDifficulty > CFG.DIFFICULTIES.FACIL.mult &&
+        elapsed >= CFG.REWARD_ENEMY_SPAWN_TIME) {
+      this.spawnRewardEnemy();
+    }
+
     // spawn de enemigos según intervalo progresivo (tiempo relativo al inicio de partida)
     if (elapsed >= this.nextSpawnTime) {
       this.spawnEnemy(elapsed);
       this.nextSpawnTime = elapsed + this.currentInterval(elapsed);
     }
+  }
+
+  // enemigo de recompensa: una vez por oleada (auto). Con force=true (atajo/ADMIN)
+  // se invoca siempre, aunque ya haya salido antes. Su vida es la del BOSS de la
+  // oleada superior (25 + inc * wave).
+  spawnRewardEnemy(force = false) {
+    if (!force && this.rewardSpawned) return;
+    if (!force) this.rewardSpawned = true;
+    const inc = this.scene.getBossLifeInc ? this.scene.getBossLifeInc() : 0;
+    const life = CFG.BOSS_LIFE + inc * this.scene.wave;
+    const enemy = new RewardEnemy(this.scene, CFG.REWARD_ENEMY_X, CFG.HEIGHT / 2, life);
+    this.enemies.add(enemy.sprite);
+    enemy.sprite.setData('handler', enemy);
   }
 
   spawnBoss() {
@@ -149,6 +171,7 @@ class EnemySpawner {
     this.bossSpawned = false;
     this.bossActive = false;
     this.boss = null;
+    this.rewardSpawned = false;
   }
 
   get activeEnemies() {
