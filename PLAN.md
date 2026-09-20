@@ -96,6 +96,9 @@
 | — | Versión actualizada a **0.9-prerelease** (`CFG.VERSION` y `sw.js`) | ✅ |
 | 101 | **Modo ADMIN** de pruebas: la secuencia de toques **2× "FASE x" + 2× puntos + 2× "FASE x"** (en orden, reseteo si se sale de orden o pasan 2,5s) abre una ventana con un botón por cada comando especial; los botones se pueden **marcar/desmarcar** (✔) y **CONFIRMAR** ejecuta todos los marcados y reanuda; **CERRAR** sale sin aplicar | ✅ |
 | — | Versión actualizada a **1.0.3-final-release** (`CFG.VERSION` y `sw.js`) | ✅ |
+| 104 | **Ruleta de apuestas** en la tienda: botón **APUESTA** (a la izquierda del contador de puntos) abre una ruleta de **21 casillas** (10 rojas / 10 negras / 1 verde x10); el jugador introduce la apuesta en un **campo numérico** y elige **ROJO/NEGRO**; al confirmar, la ruleta gira y si cae su color **dobla** los puntos, si cae la **verde** gana **x10** (independiente del color) y si cae el contrario **pierde**; ventanas modales de aviso y de resultado con botón VOLVER; versión **1.0.4-final-release** | ✅ |
+| 105 | Nuevo enemigo **ENEMIGO DE RECOMPENSA** (`RewardEnemy`): **1 vez por oleada** (solo MEDIO/DIFÍCIL/EXTREMO, nunca FÁCIL ni oleada 5), se mueve **solo en vertical** (X fijo), permanece **30s** con **cronómetro**, su vida es la del **BOSS de la oleada superior** (`25 + inc*wave`) y muestra el **número de vida restante** encima; **aparece emergiendo de un remolino** y al agotarse el tiempo es **absorbido por el remolino** (sin premio); atajo **May+N** y botón **ENEMIGO RECOMPENSA** en ADMIN (siempre spawnable) | ✅ |
+| 106 | **Cinta de premios**: al eliminar al enemigo de recompensa se pausa el juego y aparece una **ruleta horizontal** (cinta continua, unidireccional hacia la derecha, sin zonas negras) con **iconos** (puntos con `Point_100/250/500.png`, power ups y BAZOOKA **sin equipar**); el giro es **automático** (arranca a los 0.5s y se cierra 2s tras el premio) y **no repite el premio consecutivo**; créditos: cita **"Una vez Marcos dijo: Let it ride!"** en rojo entre SALIR y el texto legal; versión **1.0.5-final-release** | ✅ |
 
 ## Estructura de carpetas
 ```
@@ -807,3 +810,39 @@ Pantalla de inicio con instrucciones, reinicio por clic/ENTER, todos los archivo
 - Versión actualizada a **1.0.3-final-release** (`CFG.VERSION` y `sw.js`).
 - `node --check` de los archivos modificados: OK (`UIScene.js`, `config.js`, `sw.js`).
 - Prueba en navegador pendiente: secuencia de 6 toques en orden, reinicio por toque fuera de orden / pausa >2,5s, marcado múltiple, CONFIRMAR y CERRAR.
+
+## Sesión actual (ruleta de apuestas en la tienda) — v1.0.4-final-release
+
+### 104. Ruleta de apuestas ✅
+- Botón **🎰 APUESTA** en la tienda, a la izquierda del contador de puntos (no se solapa). Al pulsarlo abre una pantalla de **APUESTA**.
+- **Rueda** con **21 casillas** (10 rojas, 10 negras, 1 verde). La **verde** (`ROULETTE_GREEN`) multiplica la apuesta **x10** (`ROULETTE_GREEN_MULT`) y no se puede elegir; el jugador apuesta por **ROJO** o **NEGRO**.
+- **Campo numérico**: `<input type="number">` DOM superpuesto al canvas (posición según `Scale.FIT`), en el que se introduce la cantidad (máx. = puntos actuales). El radio de la rueda se redujo para que no se solape con la etiqueta.
+- **Selección de color** con marca (borde blanco) sobre el botón activo. **CONFIRMAR** valida la apuesta y gira la rueda (cada casilla equiprobable); **CANCELAR** vuelve a la tienda.
+- **Resultado**: si cae el color apostado **dobla** (`scoreSystem.gain`), si cae el contrario **pierde** (`scoreSystem.spend`) y si cae la **verde** gana **x10** siempre. El resultado se muestra en una **ventana modal** informativa con **VOLVER A LA TIENDA**; los avisos de apuesta no válida también usan ventana modal (no texto tras el input).
+- **`ScoreSystem.gain(points)`**: nuevo método que suma puntos sin contar kill.
+- **Nuevo `js/objects/Roulette.js`** (`RouletteWheel`): rueda dibujada con `Graphics` (sectores por `fillPoints`, 21 casillas), flecha fija, giro por tween; `colorOf()` devuelve `red`/`black`/`green`.
+- **`index.html`**: registrado `Roulette.js` y CSS de `#roulette-bet-input`.
+- Versión actualizada a **1.0.4-final-release** (`CFG.VERSION` y `sw.js`).
+
+## Sesión actual (enemigo de recompensa y cinta de premios) — v1.0.5-final-release
+
+### 105. Enemigo de recompensa (`RewardEnemy`) ✅
+- **Nuevo `js/objects/RewardEnemy.js`** (registrado en `index.html`): enemigo que **solo se mueve en vertical** (X fijo `REWARD_ENEMY_X`) con vaivén senoidal; textura **procedural** (cristal/estrella en `REWARD_ENEMY_COLOR`).
+- **Spawn 1×/oleada**: en `EnemySpawner.update()` se invoca `spawnRewardEnemy()` si `!rewardSpawned && wave < TOTAL_WAVES && baseDifficulty > FACIL.mult && elapsed >= REWARD_ENEMY_SPAWN_TIME` (25s). Flag `rewardSpawned` reseteado en `resetWave()`. Con `force=true` (atajo/ADMIN) se invoca **siempre** aunque ya haya salido.
+- **Vida = BOSS de la oleada superior**: `life = CFG.BOSS_LIFE + inc * wave` (`getBossLifeInc`).
+- **Número de vida** y **cronómetro (30s)** como textos sobre el enemigo, actualizados en `update()`. `damage()` actualiza el número y al morir devuelve `true`.
+- **Aparición/absorción con remolino**: `appear()` (escala 0→1 con giro) y `absorb()` (escala 1→0 con giro). `GameScene.spawnWhirlpool(x, y, grow)`: espiral procedural que **crece** (aparición) o **se encoge** (absorción). Al agotarse el tiempo el enemigo se absorbe **sin premio**.
+- **Muerte → premio**: `GameScene.handleHit()` añade la rama `handler instanceof RewardEnemy` → `onRewardEnemyKilled()` (explosión + abre la cinta en UIScene, diferido para salir del callback de físicas).
+- Atajos: **May+N** en `GameScene` → `spawnRewardEnemy(true)`; botón **ENEMIGO RECOMPENSA** en el Modo ADMIN (ventana ampliada a `winH 430`).
+
+### 106. Cinta de premios (ruleta horizontal) ✅
+- **`UIScene.openRewardWheel()`**: pausa GameScene (`setUILocked` + `scene.pause`), muestra **"¡RECOMPENSA!"** con un viewport (máscara bitmap reutilizable `reward_mask`) y una **cinta** con las casillas de `CFG.REWARD_OPTIONS` (100/250/500 pts, 7 power ups y BAZOOKA).
+- **Iconos**: `getRewardImg()` usa los sprites `Point_100/250/500.png` (`point_100/250/500_img`, cargados en `BootScene`), los `img` de `CFG.POWER_UPS` y `CFG.WEAPONS.BAZOOKA.img`.
+- **Cinta continua y unidireccional**: bucle de **5 repeticiones** (`REPEAT`) y movimiento **siempre hacia la derecha** con **envoltura módulo `loopW`** (banda `[minX, minX+loopW)`), de modo que **nunca hay zonas en negro** y los elementos entran por el borde izquierdo; atraviesa varias vueltas (`K=5`) antes de asentar en la casilla elegida.
+- **Automática**: el giro arranca a los **0.5s** de abrirse y, tras mostrar el premio **2s**, se cierra sola y **reanuda** (`closeRewardWheel()` limpia temporizadores). Sin botones GIRAR/CONTINUAR.
+- **`applyReward()`**: puntos → `scoreSystem.gain`; power up → `powerUpSystem.collect`; **BAZOOKA** → se añade a `ownedWeapons` **sin equipar**.
+- **Estadística**: `lastRewardIndex` evita que salga el **mismo premio dos veces seguidas** (re-elige si coincide).
+- **CREDITOS**: añadida en rojo la cita **"Una vez Marcos dijo: Let it ride!"** entre el texto legal y el botón SALIR (`BootScene.showCredits()`).
+- Versión actualizada a **1.0.5-final-release** (`CFG.VERSION` y `sw.js`).
+- `node --check` de los archivos modificados: OK (`config.js`, `RewardEnemy.js`, `EnemySpawner.js`, `GameScene.js`, `UIScene.js`, `BootScene.js`, `Roulette.js`, `ScoreSystem.js`, `sw.js`).
+- Prueba en navegador pendiente: ruleta de la tienda (apuesta/giro/verde), enemigo de recompensa (aparición con remolino, timer, absorción, cinta automática con iconos y sin zonas negras), May+N y botón ADMIN.
