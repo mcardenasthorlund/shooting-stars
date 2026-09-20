@@ -640,7 +640,16 @@ class BootScene extends Phaser.Scene {
       close();
     });
 
-    win.add([winBg, maniac, creditText, musicTitle, musicText, legalText, exitBtn]);
+    // cita entre el texto legal y el botón SALIR (en rojo)
+    const quoteText = this.add.text(0, 162, 'Una vez Marcos dijo: Let it ride!', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#ff3b3b',
+      fontStyle: 'bold',
+      align: 'center',
+    }).setOrigin(0.5, 0.5);
+
+    win.add([winBg, maniac, creditText, musicTitle, musicText, legalText, quoteText, exitBtn]);
   }
 
   // pantalla de información del juego: 3 secciones (Enemigos / Power Ups / Armas),
