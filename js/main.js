@@ -50,59 +50,61 @@ game.scale.on('resize', positionHtmlOverlays);
 game.events.once('ready', positionHtmlOverlays);
 
 // ---- Botón de pantalla completa ----
-const fsBtn = document.getElementById('fullscreen-btn');
-if (fsBtn) {
-  fsBtn.addEventListener('click', () => {
-    if (document.fullscreenElement) {
-      if (document.exitFullscreen) document.exitFullscreen();
-    } else if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    }
-  });
-}
-
-// ---- Fullscreen automático en el primer toque (solo móviles táctiles) ----
-// El navegador exige un gesto del usuario para el fullscreen; se aprovecha el
-// primer toque para pedirlo. En escritorio o como app standalone se ignora.
-function isTouchDevice() {
-  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-}
-
-function enterFullscreen() {
-  if (document.fullscreenElement) return;
-  if (document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen().catch(() => {});
+// En la app nativa (Capacitor) la app ya es fullscreen; se omite este bloque.
+if (!CAPACITOR) {
+  const fsBtn = document.getElementById('fullscreen-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    });
   }
-}
 
-if (isTouchDevice()) {
-  const requestFs = () => {
+  // ---- Fullscreen automático en el primer toque (solo móviles táctiles) ----
+  // El navegador exige un gesto del usuario para el fullscreen; se aprovecha el
+  // primer toque para pedirlo. En escritorio o como app standalone se ignora.
+  function isTouchDevice() {
+    return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  }
+
+  function enterFullscreen() {
+    if (document.fullscreenElement) return;
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }
+
+  if (isTouchDevice()) {
+    const requestFs = () => {
+      enterFullscreen();
+      window.removeEventListener('pointerdown', requestFs);
+    };
+    window.addEventListener('pointerdown', requestFs, { passive: true });
+  }
+
+  // ---- Fullscreen desde el botón "IR AL MENÚ" ----
+  // Phaser procesa el puntero en un contexto sin "transient activation", por lo que
+  // requestFullscreen lanzado desde su callback no es aceptado en la PWA (Chrome/Android).
+  // La solución: marcar un flag y pedir el fullscreen en el primer 'pointerup' NATIVO
+  // real, que sí es un gesto de confianza (igual que el botón de fullscreen manual).
+  let pendingFullscreenFromMenu = false;
+  function requestFullscreenFromMenu() {
+    if (document.fullscreenElement) return;
+    pendingFullscreenFromMenu = true;
+  }
+  window.addEventListener('pointerup', () => {
+    if (!pendingFullscreenFromMenu) return;
+    pendingFullscreenFromMenu = false;
     enterFullscreen();
-    window.removeEventListener('pointerdown', requestFs);
-  };
-  window.addEventListener('pointerdown', requestFs, { passive: true });
+  }, { passive: true });
 }
-
-// ---- Fullscreen desde el botón "IR AL MENÚ" ----
-// Phaser procesa el puntero en un contexto sin "transient activation", por lo que
-// requestFullscreen lanzado desde su callback no es aceptado en la PWA (Chrome/Android).
-// La solución: marcar un flag y pedir el fullscreen en el primer 'pointerup' NATIVO
-// real, que sí es un gesto de confianza (igual que el botón de fullscreen manual).
-let pendingFullscreenFromMenu = false;
-function requestFullscreenFromMenu() {
-  if (document.fullscreenElement) return;
-  pendingFullscreenFromMenu = true;
-}
-window.addEventListener('pointerup', () => {
-  if (!pendingFullscreenFromMenu) return;
-  pendingFullscreenFromMenu = false;
-  enterFullscreen();
-}, { passive: true });
 
 // ---- PWA: registro del service worker + aviso de nueva versión ----
-// En localhost (desarrollo) se desactiva el SW: se desregistra cualquier copia
-// ya instalada para evitar fallos de fetch (ERR_CACHE_MISS) que ralentizan la carga.
-if ('serviceWorker' in navigator) {
+// En la app nativa (Capacitor) no se usa service worker.
+if (!CAPACITOR && 'serviceWorker' in navigator) {
   const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
   if (isLocalhost) {
     window.addEventListener('load', () => {
@@ -130,6 +132,7 @@ if ('serviceWorker' in navigator) {
 }
 
 function showUpdateBanner() {
+  if (CAPACITOR) return;
   const banner = document.getElementById('update-banner');
   if (!banner) return;
   banner.classList.add('visible');
@@ -140,42 +143,45 @@ function showUpdateBanner() {
 }
 
 // ---- PWA: botón de instalación (solo si el navegador puede instalarla) ----
-let deferredInstallPrompt = null;
-const installBtn = document.getElementById('install-btn');
+// En la app nativa (Capacitor) no aplica.
+if (!CAPACITOR) {
+  let deferredInstallPrompt = null;
+  const installBtn = document.getElementById('install-btn');
 
-function isStandalone() {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true
-  );
-}
+  function isStandalone() {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    );
+  }
 
-function setInstallButtonVisible(visible) {
-  if (installBtn) installBtn.style.display = visible ? 'flex' : 'none';
-}
+  function setInstallButtonVisible(visible) {
+    if (installBtn) installBtn.style.display = visible ? 'flex' : 'none';
+  }
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  if (!isStandalone()) setInstallButtonVisible(true);
-});
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!isStandalone()) setInstallButtonVisible(true);
+  });
 
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const choice = await deferredInstallPrompt.userChoice;
-    if (choice && choice.outcome === 'accepted') {
-      setInstallButtonVisible(false);
-    }
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        setInstallButtonVisible(false);
+      }
+      deferredInstallPrompt = null;
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    setInstallButtonVisible(false);
     deferredInstallPrompt = null;
   });
+
+  // Si el juego ya se abre como app instalada, no mostrar el botón
+  if (isStandalone()) setInstallButtonVisible(false);
 }
-
-window.addEventListener('appinstalled', () => {
-  setInstallButtonVisible(false);
-  deferredInstallPrompt = null;
-});
-
-// Si el juego ya se abre como app instalada, no mostrar el botón
-if (isStandalone()) setInstallButtonVisible(false);

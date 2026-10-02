@@ -10,3 +10,7 @@ twa-manifest.json
 manifest-checksum.txt
 plan-app.md
 plan-ios.md
+
+# Proyecto Capacitor (app nativa)
+app-capacitor/
+node_modules/

@@ -1,3 +1,7 @@
+// Flag de plataforma: false en la PWA/web, true en la app nativa (Capacitor).
+// En la app (www) se define window.CAPACITOR=true antes de cargar config.js.
+let CAPACITOR = (typeof window !== 'undefined' && window.CAPACITOR === true);
+
 const CFG = Object.freeze({
   VERSION: '1.0.5-final-release',
   WIDTH: 800,
